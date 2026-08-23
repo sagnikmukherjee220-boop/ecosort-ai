@@ -11,31 +11,69 @@ pinned: false
 # EcoSort AI — Smart Waste Segregation Website
 
 A Class XII Computer Science / AI investigatory project: a web app that uses
-real-time computer vision (multi-object detection) and a rule-based
-classification engine to identify waste items and tell you exactly how to
-segregate them — Biodegradable, Recyclable, Non-Recyclable, E-Waste, or
-Hazardous.
-
-Runs **entirely on your own machine** in VS Code — no Google Colab, no
-third-party AI API, no external hosting. You control the server, and you
-control if/when it's exposed publicly (via your own `localtunnel` link).
+a vision-language model to identify *any* object a camera or photo shows it
+and tell you exactly how to segregate it — Biodegradable, Recyclable,
+Non-Recyclable, E-Waste, or Hazardous.
 
 ## Features
 
-- **Live multi-object detection** via webcam (YOLOv8, Ultralytics)
-- **Photo upload** detection mode
-- **5-category waste classification** with a transparent rule-based mapping engine
-- **Voice guidance** (Web Speech API) reads out disposal instructions
+- **Open-vocabulary object identification** via a vision-language model
+  (not limited to a fixed list of classes — it can name and classify
+  things it was never explicitly trained to recognize)
+- **Live webcam** and **photo upload** detection modes
+- **5-category waste classification**, decided by the model and grounded
+  in real municipal solid-waste guidelines
+- **Voice guidance** (Web Speech API) reads out disposal instructions,
+  in English, Hindi, Bengali, Tamil, Telugu, or Marathi
+- **Full UI translation** with a language switcher in the navbar
 - **Eco-points, streaks & badges** dashboard with a live chart
 - **EcoBot** — a fully offline, rule-based chatbot for waste FAQs
 - **Guidelines page** with detailed, accurate disposal information per category
 - **Printable Impact Certificate** — a nice "wow" moment to show your examiner
-- Fully local SQLite history — nothing leaves your machine
+
+## How it works (for your viva/report)
+
+1. **Identification** — the captured frame is sent to a vision-language
+   model (`meta-llama/Llama-4-Scout-17B-16E-Instruct`, hosted via Hugging
+   Face's Inference Providers) with a prompt asking it to name every object
+   it sees and assign each one to a waste category. This is genuinely
+   open-vocabulary — unlike a fixed-class detector (e.g. YOLO trained on
+   COCO's 80 classes), it can identify things far outside any predefined list.
+2. **Category metadata** — `waste_map.py` owns what each of the five
+   categories *means* (bin name, color, disposal tip, points) — the model
+   only picks which category key applies; the presentation stays consistent
+   and is the project's own reasoning/knowledge layer.
+3. **Guidance** — the matched category's disposal tip is shown on screen,
+   spoken aloud (in the selected language), and logged to a local database
+   that powers the dashboard, eco-points, streaks and badges.
+
+**Trade-off worth knowing for your viva:** this design needs an internet
+connection and a Hugging Face API token at inference time — it is not fully
+offline. The earlier YOLOv8-based version *was* fully offline but could only
+recognize 80 fixed COCO classes; this version trades that offline-ness for
+much broader, genuinely open-set recognition. Both are legitimate CV
+architectures — pick whichever story fits your report better, or mention
+both in the "design decisions" section as a considered trade-off. There's no
+technical reason you couldn't reimplement the YOLO path from `waste_map.py`'s
+git history if you wanted the offline story instead.
+
+**Bounding boxes:** the vision-language model doesn't give reliable
+pixel-accurate bounding boxes the way a dedicated detector does, so the UI
+shows identified items as a list (name, category, bin, confidence) rather
+than drawing boxes on the video/photo.
 
 ## 1. Setup (one-time)
 
-You need **Python 3.9+**. Open this folder in VS Code, open a terminal
-(`` Ctrl+` ``), and run:
+You need **Python 3.9+** and a **Hugging Face account**.
+
+1. Get an API token: `https://huggingface.co/settings/tokens/new` → Fine-grained
+   → check **"Make calls to Inference Providers"** → Generate.
+2. Enable at least one provider that serves the vision model: go to
+   `https://huggingface.co/settings/inference-providers` and toggle on
+   **DeepInfra** (used by default — see `VLM_PROVIDER` in `app.py`; any
+   provider from that model's `inferenceProviderMapping` also works if you
+   change the constant).
+3. Open this folder in VS Code, open a terminal (`` Ctrl+` ``), and run:
 
 ```bash
 python -m venv venv
@@ -45,108 +83,74 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-> The first time you run the app, `ultralytics` will auto-download the
-> `yolov8n.pt` weights file (~6 MB) — you need internet **once** for this.
-> After that it's cached locally and the app works fully offline.
-
 ## 2. Run the website
 
+Set your token as an environment variable, then start the app:
+
+```powershell
+$env:HF_TOKEN = "hf_your_token_here"    # PowerShell
+python app.py
+```
 ```bash
+export HF_TOKEN=hf_your_token_here      # macOS/Linux
 python app.py
 ```
 
 Open **http://127.0.0.1:5000** in your browser. Allow camera access when
 prompted on the Detect page.
 
-## 3. (Optional) Share it publicly with localtunnel — you stay in control
+## 3. Deploy permanently (Render.com — free)
 
-In a **second terminal**, while `app.py` is still running:
+This repo includes a `Dockerfile` ready for Render's free Web Service tier:
 
-```bash
-npm install -g localtunnel
-lt --port 5000
-```
+1. Push this repo to GitHub.
+2. On [render.com](https://render.com), **New +** → **Web Service** → connect
+   the repo. Render auto-detects the `Dockerfile`. Instance Type: **Free**.
+3. In the service's **Environment** tab, add a secret: `HF_TOKEN` = your
+   Hugging Face token (never commit this to the repo).
+4. Deploy. You'll get a permanent public URL that works from any device.
 
-This prints a public URL (e.g. `https://xyz.loca.lt`) that tunnels to your
-own laptop — nothing is uploaded anywhere, and you can kill the tunnel any
-time with `Ctrl+C`. Perfect for demoing to an external examiner from your
-own machine without deploying to any cloud service.
-
-## 4. Deploy permanently (Hugging Face Spaces — free)
-
-To have this reachable from any device, anywhere, without your laptop
-staying on, deploy it to [Hugging Face Spaces](https://huggingface.co/spaces)
-using the included `Dockerfile`:
-
-1. Create a free Hugging Face account, then create a new Space:
-   **Space SDK → Docker**, visibility public or private, any name.
-2. Push this whole project folder to the Space's git repo (Spaces gives you
-   a `git remote` URL on creation):
-   ```bash
-   git init
-   git remote add space https://huggingface.co/spaces/<your-username>/<space-name>
-   git add .
-   git commit -m "Deploy EcoSort AI"
-   git push space main
-   ```
-3. The Space builds the `Dockerfile` automatically and gives you a permanent
-   URL like `https://<your-username>-<space-name>.hf.space` that works from
-   any device, on any network — no firewall or router config needed.
-
-**Two things to know about the free tier:**
-- The container **sleeps after a period of inactivity** and wakes back up
-  (~20–30s cold start) on the next visit — normal for free hosting, not a bug.
-- The **SQLite history resets** whenever the Space restarts/rebuilds, since
-  free Spaces storage is ephemeral. The eco-points/streaks/dashboard will
-  start fresh after a sleep-wake cycle. If you need that to persist, enable
-  a **Persistent Storage** add-on on the Space settings page (paid) and
-  point `db.py`'s `DB_PATH` at the mounted `/data` directory instead.
+**Known limitations of the free tier:**
+- Sleeps after ~15 minutes idle; the next visit takes ~30-60s to wake up.
+  Visit the URL yourself a few minutes before you need it live (e.g. before
+  a viva demo).
+- 0.1 CPU is enough for this app (the heavy model inference happens on
+  Hugging Face's servers, not Render's), but stay aware it's a shared
+  free-tier box.
 
 ## Project Structure
 
 ```
-app.py                 Flask app & API routes
-waste_map.py            COCO-class -> waste-category rule engine
-db.py                    SQLite history / points / streaks / badges
-chatbot_engine.py        Offline rule-based chatbot logic
-data/guidelines.json      Disposal guideline content
-data/chatbot_kb.json      Chatbot knowledge base
-templates/               Jinja2 HTML pages
-static/css/style.css      Design system (glassmorphism, eco theme)
-static/js/                Detection loop, dashboard chart, chatbot UI
+app.py                   Flask app, API routes, vision-model prompt & call
+waste_map.py              Waste-category metadata (bin, tip, color, points)
+db.py                     SQLite history / points / streaks / badges
+chatbot_engine.py         Offline rule-based chatbot logic
+data/guidelines.json       Disposal guideline content
+data/chatbot_kb.json       Chatbot knowledge base
+templates/                Jinja2 HTML pages
+static/css/style.css       Design system (glassmorphism, eco theme)
+static/js/                 Detection loop, dashboard chart, chatbot UI, i18n
+static/i18n/                Per-language UI translation JSON files
 static/vendor/chart.umd.min.js   Chart.js, vendored locally (no CDN needed)
 ```
 
-## How the CV pipeline works (for your viva/report)
-
-1. **Detection** — YOLOv8n (pretrained on the 80-class COCO dataset) finds
-   every object in a frame with a bounding box + confidence score. This is
-   the *multi-object detection* stage — genuinely real-time, robust,
-   industry-grade CV, no training required.
-2. **Classification** — `waste_map.py` maps each detected object (e.g.
-   `"cell phone"`, `"banana"`, `"bottle"`) to one of five waste categories
-   using a rule engine grounded in real municipal solid-waste guidelines.
-   This is the project's own classification/reasoning layer.
-3. **Guidance** — the matched category's disposal tip is shown on screen,
-   spoken aloud, and logged to a local database that powers the dashboard,
-   eco-points, streaks and badges.
-
-This "pretrained detector + custom reasoning layer" design is intentional:
-it is the same detect-then-reason architecture used in real AI-guided
-material-recovery facilities, and it stays reliable during a live demo
-instead of risking a fragile, under-trained custom model.
-
 ## Customising / Extending
 
-- Add/edit waste-category mappings in `waste_map.py` → `COCO_TO_WASTE`.
+- Add/edit waste-category metadata (bin name, tip, color, points) in
+  `waste_map.py` → `CATEGORY_META`.
+- Swap the vision model or provider by changing `VLM_MODEL` / `VLM_PROVIDER`
+  in `app.py` — check a model's live providers at
+  `https://huggingface.co/api/models/<model-id>?expand[]=inferenceProviderMapping`
+  before switching, since not every provider serves every model reliably.
+- Add a new UI language: copy `static/i18n/en.json` to `<code>.json` with
+  translated values, add the language to the `LANGS` list in
+  `static/js/i18n.js`, and add its name to `LANG_NAMES` in `app.py` (so the
+  model knows what language to answer in).
 - Add/edit chatbot Q&A pairs in `data/chatbot_kb.json`.
 - Edit disposal guideline text in `data/guidelines.json`.
-- Want a *custom-trained* classifier on top (e.g. to tell recyclable
-  plastic apart from recyclable glass)? Train a small image classifier
-  (e.g. MobileNetV2 transfer learning on a dataset like TrashNet) and plug
-  its prediction in as a second pass inside `run_detection()` in `app.py`.
 
 ## Credits
 
-Built with Flask, Ultralytics YOLOv8, and Chart.js. Waste-segregation
-guidance is based on general municipal solid-waste management practices.
+Built with Flask, Hugging Face Inference Providers, and Chart.js.
+Waste-segregation guidance is based on general municipal solid-waste
+management practices.

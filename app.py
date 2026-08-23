@@ -12,12 +12,13 @@ See README.md for full setup instructions.
 """
 import base64
 import io
+import json
 import os
 import time
 
 from flask import Flask, render_template, request, jsonify
+from huggingface_hub import InferenceClient
 from PIL import Image
-import numpy as np
 
 import db
 import waste_map
@@ -26,50 +27,118 @@ from chatbot_engine import get_response
 app = Flask(__name__)
 
 # ----------------------------------------------------------------------
-# Load the pretrained YOLOv8 model once at startup (lazy import so the
-# website's other pages still work even before the (~6MB) weights file
-# has finished downloading the very first time you run the app).
+# Object identification runs on a vision-language model via Hugging Face's
+# Inference Providers, instead of a fixed-80-class local detector. This
+# trades away offline operation for genuinely open-vocabulary recognition
+# (anything the model can name, not just COCO's 80 classes) — see README
+# for the reasoning. Needs an HF_TOKEN env var (a Hugging Face access
+# token with "Make calls to Inference Providers" permission).
 # ----------------------------------------------------------------------
-_model = None
+_hf_client = None
+VLM_MODEL = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+VLM_PROVIDER = "deepinfra"
 
 
-def get_model():
-    global _model
-    if _model is None:
-        from ultralytics import YOLO
-        _model = YOLO("yolov8n.pt")  # auto-downloads once, then cached locally
-    return _model
+def get_hf_client():
+    global _hf_client
+    if _hf_client is None:
+        token = os.environ.get("HF_TOKEN")
+        if not token:
+            raise RuntimeError("HF_TOKEN environment variable is not set")
+        _hf_client = InferenceClient(api_key=token, provider=VLM_PROVIDER)
+    return _hf_client
 
 
 CONF_THRESHOLD_DEFAULT = 0.35
 
+LANG_NAMES = {
+    "en": "English", "hi": "Hindi", "bn": "Bengali",
+    "ta": "Tamil", "te": "Telugu", "mr": "Marathi",
+}
+
 
 def decode_image(data_url_or_file):
-    """Accept either a base64 data-URL (from webcam canvas) or an uploaded file."""
+    """Accept either a base64 data-URL (from webcam canvas) or an uploaded file.
+    Returns (PIL.Image, base64 data-URI string) — the model needs the data URI."""
     if hasattr(data_url_or_file, "read"):
         img = Image.open(data_url_or_file.stream).convert("RGB")
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        data_uri = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
     else:
         header, encoded = data_url_or_file.split(",", 1)
         img_bytes = base64.b64decode(encoded)
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-    return np.array(img)
+        data_uri = data_url_or_file
+    return img, data_uri
 
 
-def run_detection(img_array, conf_threshold=CONF_THRESHOLD_DEFAULT):
-    model = get_model()
-    results = model.predict(img_array, conf=conf_threshold, verbose=False)[0]
+def build_prompt(conf_threshold: float, lang: str) -> str:
+    if conf_threshold >= 0.45:
+        inclusiveness = "Only list objects you can identify with high confidence."
+    elif conf_threshold <= 0.25:
+        inclusiveness = "List every object you can find, even ones you're only somewhat sure about."
+    else:
+        inclusiveness = "List objects you can identify with reasonable confidence."
+
+    lang_name = LANG_NAMES.get(lang, "English")
+    category_list = ", ".join(list(waste_map.CATEGORY_META) + ["ignore"])
+
+    return (
+        "You are a waste-segregation assistant. Identify every distinct physical "
+        f"object in this image. {inclusiveness}\n"
+        f"For each object, write its name in {lang_name}, and classify it into "
+        f"exactly one of these categories: {category_list}. Use 'ignore' for "
+        "anything that isn't a discardable waste item (people, animals, "
+        "vehicles, furniture, walls, etc).\n"
+        "Also give a confidence score from 0 to 1 for your own identification.\n"
+        'Respond with ONLY a JSON array, no other text, no markdown fences, '
+        'where each item is exactly: '
+        '{"label": "object name", "category": "category key", "confidence": 0.0}'
+    )
+
+
+def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_THRESHOLD_DEFAULT, lang="en"):
+    client = get_hf_client()
+    prompt = build_prompt(conf_threshold, lang)
+
+    response = client.chat.completions.create(
+        model=VLM_MODEL,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": image_data_uri}},
+            ],
+        }],
+        max_tokens=800,
+    )
+    raw = response.choices[0].message.content.strip()
+    # Models sometimes wrap JSON in ```json fences despite instructions not to.
+    if raw.startswith("```"):
+        raw = raw.strip("`")
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    try:
+        items = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return []
+
     detections = []
-    names = results.names
-    for box in results.boxes:
-        cls_id = int(box.cls[0])
-        label = names[cls_id]
-        confidence = float(box.conf[0])
-        xyxy = box.xyxy[0].tolist()
-        category, meta = waste_map.classify(label)
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict) or "label" not in item:
+            continue
+        category, meta = waste_map.category_meta(item.get("category", "ignore"))
+        try:
+            confidence = float(item.get("confidence", 0.5))
+        except (TypeError, ValueError):
+            confidence = 0.5
         detections.append({
-            "label": label,
-            "confidence": round(confidence, 3),
-            "box": [round(v, 1) for v in xyxy],
+            "label": str(item["label"])[:60],
+            "confidence": round(max(0.0, min(1.0, confidence)), 3),
+            "box": None,  # the model doesn't give reliable pixel-accurate boxes
             "category": category,
             "category_label": meta["label"],
             "color": meta["color"],
@@ -129,17 +198,23 @@ def api_detect():
     t0 = time.time()
     payload = request.get_json(silent=True)
     source = "webcam"
+    lang = "en"
     if payload and "image" in payload:
-        img_array = decode_image(payload["image"])
+        image, image_data_uri = decode_image(payload["image"])
         source = payload.get("source", "webcam")
+        lang = payload.get("lang", "en")
     elif "image" in request.files:
-        img_array = decode_image(request.files["image"])
+        image, image_data_uri = decode_image(request.files["image"])
         source = "upload"
+        lang = request.form.get("lang", "en")
     else:
         return jsonify({"error": "no image provided"}), 400
 
     conf = float(request.args.get("conf", CONF_THRESHOLD_DEFAULT))
-    detections = run_detection(img_array, conf_threshold=conf)
+    try:
+        detections = run_detection(image, image_data_uri, conf_threshold=conf, lang=lang)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500
 
     # log every real (non-ignored) waste detection for the dashboard/gamification
     for d in detections:

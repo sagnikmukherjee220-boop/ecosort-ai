@@ -156,19 +156,26 @@
 
   // ---------------- API call ----------------
   async function sendForDetection(dataUrl, source) {
+    const lang = window.I18N ? window.I18N.lang : "en";
     const res = await fetch(`/api/detect?conf=${currentConf}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: dataUrl, source }),
+      body: JSON.stringify({ image: dataUrl, source, lang }),
     });
     if (!res.ok) throw new Error("server error " + res.status);
     return res.json();
   }
 
   // ---------------- Translation helpers ----------------
-  function objectName(coco_label) {
-    if (!window.I18N) return coco_label;
-    return window.I18N.t(`objects.${coco_label}`, coco_label);
+  // Object names now come back from the vision model already written in
+  // the requested language, so no local objects.json lookup is needed.
+  function objectName(label) {
+    return label;
+  }
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
   }
   function categoryField(category, field, fallback) {
     if (!window.I18N) return fallback;
@@ -194,22 +201,25 @@
     }
 
     visible.forEach((d) => {
-      const name = objectName(d.label);
-      const catLabel = categoryField(d.category, "label", d.category_label);
-      const bin = categoryField(d.category, "bin", d.bin);
+      const name = escapeHtml(objectName(d.label));
+      const catLabel = escapeHtml(categoryField(d.category, "label", d.category_label));
+      const bin = escapeHtml(categoryField(d.category, "bin", d.bin));
 
-      // draw box
-      const [x1, y1, x2, y2] = d.box;
-      ctx.strokeStyle = d.color;
-      ctx.lineWidth = Math.max(2, w / 300);
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      ctx.fillStyle = d.color;
-      const text = `${name} · ${catLabel}`;
-      ctx.font = `${Math.max(13, w / 55)}px Segoe UI, sans-serif`;
-      const textW = ctx.measureText(text).width + 10;
-      ctx.fillRect(x1, Math.max(0, y1 - 22), textW, 22);
-      ctx.fillStyle = "#04140b";
-      ctx.fillText(text, x1 + 5, Math.max(15, y1 - 6));
+      // draw box — the vision model doesn't give reliable pixel-accurate
+      // boxes, so d.box is null; only draw when one is actually present.
+      if (d.box) {
+        const [x1, y1, x2, y2] = d.box;
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = Math.max(2, w / 300);
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.fillStyle = d.color;
+        const text = `${name} · ${catLabel}`;
+        ctx.font = `${Math.max(13, w / 55)}px Segoe UI, sans-serif`;
+        const textW = ctx.measureText(text).width + 10;
+        ctx.fillRect(x1, Math.max(0, y1 - 22), textW, 22);
+        ctx.fillStyle = "#04140b";
+        ctx.fillText(text, x1 + 5, Math.max(15, y1 - 6));
+      }
 
       // list item
       const row = document.createElement("div");

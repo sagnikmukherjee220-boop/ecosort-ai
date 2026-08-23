@@ -1,4 +1,5 @@
 :root{
+  color-scheme: dark;
   --bg:#07130f;
   --bg2:#0c1f17;
   --surface: rgba(255,255,255,0.06);
@@ -166,6 +167,10 @@ body{
 .nav-lang{display:flex;align-items:center;}
 .lang-select{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:7px 10px;font-size:.82rem;cursor:pointer;}
 .lang-select:focus{outline:2px solid var(--accent);}
+/* Native <option> popups ignore the parent's translucent background and
+   default to the OS's (usually white) listbox — set an opaque dark
+   background explicitly so option text stays readable. */
+.lang-select option{background:#0e2a1c;color:var(--text);}
 
 /* ---------- DASHBOARD ---------- */
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:26px;}
