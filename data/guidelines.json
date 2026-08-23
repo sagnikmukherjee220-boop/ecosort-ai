@@ -1,0 +1,81 @@
+[
+  {
+    "key": "biodegradable",
+    "title": "Biodegradable Waste",
+    "bin": "Green Bin",
+    "color": "#4caf50",
+    "icon": "leaf",
+    "summary": "Organic matter that decomposes naturally through biological processes.",
+    "examples": ["Fruit & vegetable peels", "Leftover food", "Tea leaves & coffee grounds", "Garden/yard waste", "Paper napkins (soiled)", "Eggshells"],
+    "guidelines": [
+      "Collect in a separate green/organic bin, ideally lined with a compostable or paper bag — not plastic.",
+      "Keep it dry-ish; excess liquid speeds up foul odour and pest attraction.",
+      "Where possible, compost at home or through a municipal composting scheme — it turns into nutrient-rich manure in 30–60 days.",
+      "Never mix with plastic, glass or e-waste — even a small amount of contamination ruins an entire compost batch.",
+      "Dispose of daily in warm climates to avoid odour and pests."
+    ]
+  },
+  {
+    "key": "recyclable",
+    "title": "Recyclable (Dry) Waste",
+    "bin": "Blue Bin",
+    "color": "#2196f3",
+    "icon": "recycle",
+    "summary": "Clean, dry materials — paper, plastic, glass, metal — that can be reprocessed into new products.",
+    "examples": ["Plastic bottles", "Glass jars/bottles", "Metal cans", "Cardboard & newspaper", "Books & paper"],
+    "guidelines": [
+      "Rinse containers to remove food residue before disposal — contamination is the #1 reason recyclables end up in landfill.",
+      "Flatten cardboard boxes and plastic bottles to save space and ease transport.",
+      "Separate by material where your local facility requires it (paper / plastic / glass / metal).",
+      "Remove caps and labels if your recycler asks for it (varies by locality).",
+      "Never recycle broken glass loose — wrap it and mark it to protect handlers."
+    ]
+  },
+  {
+    "key": "non_recyclable",
+    "title": "Non-Recyclable (Reject) Waste",
+    "bin": "Black Bin",
+    "color": "#757575",
+    "icon": "trash",
+    "summary": "Mixed-material, soiled, or low-value items that current recycling streams cannot process.",
+    "examples": ["Multi-layer plastic wrappers", "Soiled tissues", "Broken ceramics", "Cigarette butts", "Thermocol/styrofoam pieces"],
+    "guidelines": [
+      "Minimise generation at source — avoid single-use, multi-layered packaging where possible.",
+      "Store separately from recyclables and biodegradables so it doesn't contaminate them.",
+      "Dispose of through your municipal solid-waste collection; it typically goes to a landfill or waste-to-energy facility.",
+      "Never burn this waste — burning plastics/thermocol releases toxic dioxins and furans."
+    ]
+  },
+  {
+    "key": "e_waste",
+    "title": "E-Waste",
+    "bin": "Authorised E-Waste Collection Point",
+    "color": "#ff9800",
+    "icon": "cpu",
+    "summary": "Discarded electrical/electronic devices and accessories — contains valuable recoverable metals as well as toxic substances.",
+    "examples": ["Mobile phones", "Laptops & keyboards", "TVs & monitors", "Chargers & cables", "Batteries", "Home appliances"],
+    "guidelines": [
+      "NEVER put e-waste in regular household bins — it contains lead, mercury, cadmium and other toxins that leach into soil and groundwater.",
+      "Wipe/factory-reset devices to protect your personal data before handing them over.",
+      "Hand over to an authorised e-waste recycler or a manufacturer take-back/collection programme.",
+      "Many electronics retailers and municipal bodies run periodic e-waste collection drives — look these up locally.",
+      "Batteries should ideally be dropped at dedicated battery-collection boxes, not thrown with other e-waste."
+    ]
+  },
+  {
+    "key": "hazardous",
+    "title": "Hazardous Waste",
+    "bin": "Hazardous Waste Facility",
+    "color": "#e53935",
+    "icon": "hazard",
+    "summary": "Chemically reactive, corrosive, toxic, flammable or infectious waste requiring specialised handling.",
+    "examples": ["Paints & solvents", "Pesticides", "Expired medicines", "Used batteries", "Fluorescent/CFL bulbs", "Syringes/medical waste"],
+    "guidelines": [
+      "Never pour down the drain or mix with regular waste — it can contaminate water supplies and injure sanitation workers.",
+      "Store in original, labelled, sealed containers away from children and heat sources.",
+      "Return expired medicines to a pharmacy take-back scheme where available.",
+      "Hand fluorescent bulbs and batteries to specialised collection points — they contain mercury/heavy metals.",
+      "Contact your local municipal body for scheduled hazardous-waste pickup or drop-off events."
+    ]
+  }
+]

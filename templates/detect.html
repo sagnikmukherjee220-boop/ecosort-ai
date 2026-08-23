@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Live Detection — EcoSort AI{% endblock %}
+{% block content %}
+
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;" data-i18n="detect.title">Waste Detector</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 20px;" data-i18n="detect.subtitle">Multi-object detection + classification, running live on your machine.</p>
+
+<div class="mode-tabs">
+  <button id="tabWebcam" class="active">📷 <span data-i18n="detect.tab_webcam">Live Webcam</span></button>
+  <button id="tabUpload">🖼 <span data-i18n="detect.tab_upload">Upload Photo</span></button>
+</div>
+
+<div class="detect-layout">
+  <div>
+    <div class="video-wrap" id="videoWrap">
+      <video id="webcam" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <img id="uploadPreview" style="display:none;">
+    </div>
+
+    <div class="detect-controls" id="webcamControls">
+      <button class="btn btn-primary" id="startBtn">
+        <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9z" fill="currentColor"/></svg> <span data-i18n="detect.start_camera">Start Camera</span>
+      </button>
+      <button class="btn btn-ghost" id="stopBtn" disabled><span data-i18n="detect.stop">Stop</span></button>
+      <label class="toggle-row"><input type="checkbox" id="voiceToggle" checked> 🔊 <span data-i18n="detect.voice_guidance">Voice guidance</span></label>
+      <label class="toggle-row"><input type="checkbox" id="ignoreToggle" checked> <span data-i18n="detect.hide_nonwaste">Hide non-waste objects</span></label>
+    </div>
+
+    <div class="detect-controls" id="uploadControls" style="display:none;">
+      <input type="file" id="fileInput" accept="image/*" class="btn btn-ghost">
+      <button class="btn btn-primary" id="analyzeBtn" disabled><span data-i18n="detect.analyze">Analyze Photo</span></button>
+    </div>
+
+    <div class="sensitivity-row">
+      <span data-i18n="detect.sensitivity">Detection sensitivity</span>
+      <div class="sensitivity-btns" id="sensitivityBtns">
+        <button type="button" data-conf="0.5" data-i18n="detect.sensitivity_low">Low</button>
+        <button type="button" data-conf="0.35" class="active" data-i18n="detect.sensitivity_medium">Medium</button>
+        <button type="button" data-conf="0.2" data-i18n="detect.sensitivity_high">High</button>
+      </div>
+      <span class="sensitivity-hint" data-i18n="detect.sensitivity_hint">Low finds more items but can make mistakes. High is stricter and more accurate.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;"><span data-i18n="detect.detected_items">Detected Items</span> <span id="detCount" class="pill">0</span></h3>
+    <div class="det-list" id="detList">
+      <div class="empty-state" data-i18n="detect.empty_state_webcam">Start the camera or upload a photo to see detections here.</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/detect.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}EcoBot — EcoSort AI{% endblock %}
+{% block content %}
+
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;">EcoBot</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;">An offline rule-based assistant for waste-disposal questions. No internet or API key needed.</p>
+
+<div class="card chat-shell">
+  <div class="chat-window" id="chatWindow">
+    <div class="msg bot">Hi! I'm EcoBot 🤖. Ask me about any waste category, or how the detection system works.</div>
+  </div>
+  <div class="quick-chips">
+    <span class="chip" data-q="How do I dispose of e-waste?">How do I dispose of e-waste?</span>
+    <span class="chip" data-q="What goes in the green bin?">What goes in the green bin?</span>
+    <span class="chip" data-q="How does the detection model work?">How does the model work?</span>
+    <span class="chip" data-q="How do eco points work?">How do eco-points work?</span>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Ask EcoBot something...">
+    <button class="btn btn-primary" id="sendBtn">Send</button>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}

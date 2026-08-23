@@ -1,0 +1,47 @@
+[
+  {
+    "id": "biodegradable",
+    "patterns": ["biodegradable", "organic waste", "food waste", "compost", "vegetable peel", "fruit peel", "green bin"],
+    "response": "Biodegradable waste (food scraps, peels, garden waste) goes in the Green Bin. It decomposes naturally and can be composted at home in 30-60 days. Keep it separate from plastic so your compost stays clean."
+  },
+  {
+    "id": "recyclable",
+    "patterns": ["recyclable", "recycle", "plastic bottle", "paper", "cardboard", "glass", "metal can", "blue bin"],
+    "response": "Recyclable dry waste (clean plastic, paper, glass, metal) goes in the Blue Bin. Rinse containers first and flatten cardboard - contamination with food waste is the biggest reason recyclables get rejected."
+  },
+  {
+    "id": "non_recyclable",
+    "patterns": ["non recyclable", "non-recyclable", "reject waste", "black bin", "landfill", "thermocol", "styrofoam", "wrapper"],
+    "response": "Non-recyclable/reject waste (soiled multi-layer wrappers, broken ceramics, cigarette butts) goes in the Black Bin for landfill/waste-to-energy. Never burn this waste - it releases toxic fumes."
+  },
+  {
+    "id": "ewaste",
+    "patterns": ["e-waste", "ewaste", "electronic waste", "laptop", "mobile phone", "battery", "charger", "keyboard", "tv disposal"],
+    "response": "E-waste (phones, laptops, chargers, batteries, TVs) should NEVER go in regular bins - it contains lead, mercury and cadmium. Wipe your data, then hand it to an authorised e-waste collection point or a manufacturer take-back programme."
+  },
+  {
+    "id": "hazardous",
+    "patterns": ["hazardous", "paint", "chemical", "medicine", "pesticide", "syringe", "medical waste", "cfl bulb", "fluorescent"],
+    "response": "Hazardous waste (paints, chemicals, expired medicines, CFL bulbs, syringes) needs specialised handling. Never pour it down the drain or mix with regular waste - return it to a pharmacy take-back scheme or a hazardous-waste facility."
+  },
+  {
+    "id": "how_it_works",
+    "patterns": ["how does this work", "how does it work", "how do you detect", "how does detection work", "algorithm", "model used", "yolo", "cv model"],
+    "response": "This project uses a YOLOv8 object-detection model to spot multiple items in a live webcam feed or an uploaded photo, then a rule-based classification engine maps each detected object to a waste category (biodegradable, recyclable, non-recyclable, e-waste or hazardous) with disposal guidance - all running locally, no cloud required."
+  },
+  {
+    "id": "points",
+    "patterns": ["points", "eco points", "badge", "streak", "score", "leaderboard", "gamif"],
+    "response": "Every correctly segregated item earns eco-points (5-20 depending on category) shown on your Dashboard. Rack up points to level up your badge from Rookie Sorter all the way to Platinum Segregator, and keep a daily streak going by scanning waste every day!"
+  },
+  {
+    "id": "greeting",
+    "patterns": ["hi", "hello", "hey", "good morning", "good evening"],
+    "response": "Hi! I'm EcoBot, your waste-segregation assistant. Ask me about any waste category (biodegradable, recyclable, e-waste, hazardous) or how the detection system works."
+  },
+  {
+    "id": "thanks",
+    "patterns": ["thanks", "thank you", "thx"],
+    "response": "You're welcome! Every correctly segregated item helps keep landfills smaller and recycling streams cleaner. Keep it up!"
+  }
+]

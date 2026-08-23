@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EcoSort AI{% endblock %}
+{% block content %}
+
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;">Your Impact Dashboard</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;">Every detection you make is logged locally on this machine — nothing leaves your computer.</p>
+
+<div class="dash-grid" id="dashGrid">
+  <div class="card badge-card">
+    <div class="badge-icon">🏅</div>
+    <div>
+      <div class="num" id="badgeName" style="font-size:1.15rem;font-weight:700;">—</div>
+      <div class="lbl" style="color:var(--text-dim);font-size:.85rem;">Current Badge</div>
+    </div>
+  </div>
+  <div class="card"><div class="num" id="totalPoints">0</div><div class="lbl">Eco-Points</div></div>
+  <div class="card"><div class="num" id="totalItems">0</div><div class="lbl">Items Segregated</div></div>
+  <div class="card"><div class="num" id="streak">0</div><div class="lbl">Day Streak 🔥</div></div>
+</div>
+
+<div class="dash-grid">
+  <div class="card chart-card">
+    <h3 style="margin-top:0;">Breakdown by Category</h3>
+    <canvas id="categoryChart" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">Actions</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;">Generate a shareable impact certificate, or reset your local history.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="{{ url_for('certificate_page') }}" class="btn btn-primary">🎓 View Impact Certificate</a>
+      <button class="btn btn-ghost" id="clearBtn">Reset History</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Recent Detections</h3>
+  <div style="overflow-x:auto;">
+  <table class="history">
+    <thead><tr><th>Time</th><th>Item</th><th>Category</th><th>Confidence</th><th>Points</th></tr></thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

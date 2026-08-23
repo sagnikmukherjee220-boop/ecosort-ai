@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Impact Certificate — EcoSort AI{% endblock %}
+{% block content %}
+
+<div class="certificate">
+  <div style="font-size:2.4rem;">♻️</div>
+  <h1>Certificate of Eco Impact</h1>
+  <p class="sub">Awarded by EcoSort AI</p>
+
+  <div class="cert-badge">🏅</div>
+  <h2 style="margin:6px 0 2px;">{{ stats.badge }}</h2>
+  <p class="sub" style="margin-bottom:30px;">for consistent, correct waste segregation</p>
+
+  <div class="stat-strip" style="margin:0 0 30px;">
+    <div class="card"><div class="num">{{ stats.total_points }}</div><div class="lbl">Eco-Points Earned</div></div>
+    <div class="card"><div class="num">{{ stats.total_items }}</div><div class="lbl">Items Segregated</div></div>
+    <div class="card"><div class="num">{{ stats.streak }}</div><div class="lbl">Day Streak</div></div>
+  </div>
+
+  <p style="color:var(--text-dim);font-size:.9rem;">Generated locally by EcoSort AI &middot; a Class XII Computer Science investigatory project demonstrating real-time multi-object detection and waste classification.</p>
+
+  <button class="btn btn-primary no-print" onclick="window.print()" style="margin-top:20px;">🖨 Print / Save as PDF</button>
+</div>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}About — EcoSort AI{% endblock %}
+{% block content %}
+
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;">About This Project</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;">How EcoSort AI is built, and why it's designed this way.</p>
+
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;">The Problem</h3>
+  <p style="color:var(--text-dim);line-height:1.7;">Improper waste segregation at source is one of the biggest obstacles to effective recycling and composting. Most households and institutions mix biodegradable, recyclable, e-waste and hazardous items into a single bin, making downstream sorting expensive, unsafe and often impossible. EcoSort AI demonstrates how computer vision can guide correct segregation at the point of disposal, in real time.</p>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;">How It Works — Technical Pipeline</h3>
+  <ol style="color:var(--text-dim);line-height:1.9;padding-left:20px;">
+    <li><strong style="color:var(--text)">Capture:</strong> The browser grabs frames from the webcam (or an uploaded photo) using the HTML5 Media/Canvas APIs — entirely client-side.</li>
+    <li><strong style="color:var(--text)">Detection:</strong> Each frame is sent to a local Flask endpoint, which runs it through a <strong>YOLOv8</strong> object-detection model (Ultralytics, pretrained on the COCO dataset — 80 everyday object classes), returning bounding boxes, class labels and confidence scores for every object found. This is the <em>multi-object detection</em> stage.</li>
+    <li><strong style="color:var(--text)">Classification:</strong> A rule-based reasoning engine (<code class="kbd">waste_map.py</code>) maps each detected object class to one of five waste-segregation categories — Biodegradable, Recyclable, Non-Recyclable, E-Waste or Hazardous — using a curated lookup table grounded in real municipal solid-waste guidelines.</li>
+    <li><strong style="color:var(--text)">Guidance:</strong> The matched category's disposal tip is displayed on-screen and read aloud via the Web Speech API, and the detection is logged to a local SQLite database for the dashboard, streaks and eco-points.</li>
+  </ol>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;">Why Pretrained Detection Instead of Training From Zero?</h3>
+  <p style="color:var(--text-dim);line-height:1.7;">A custom model trained on a small, student-collected image set is fragile — lighting, background clutter and unseen objects on the exam day can easily break it. EcoSort AI instead uses a robust, industry-grade, pretrained detector for perception, and puts the project's original engineering into the <em>classification and reasoning layer</em> on top — the same "detect, then reason" architecture used in real-world recycling-robot systems (e.g. AI-guided material recovery facilities). This keeps live demos reliable while still requiring genuine design decisions: category mapping, confidence thresholds, gamification logic and the offline chatbot.</p>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;">Tech Stack</h3>
+  <div class="category-grid" style="margin-top:10px;">
+    <div class="cat-card"><h4>Backend</h4><p>Python, Flask, SQLite</p></div>
+    <div class="cat-card"><h4>Computer Vision</h4><p>Ultralytics YOLOv8 (PyTorch), OpenCV, Pillow</p></div>
+    <div class="cat-card"><h4>Frontend</h4><p>HTML5, CSS3, vanilla JavaScript, Chart.js</p></div>
+    <div class="cat-card"><h4>Extras</h4><p>Web Speech API (voice), difflib-based chatbot, localtunnel for public demo access</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Deployment &amp; Control</h3>
+  <p style="color:var(--text-dim);line-height:1.7;">The entire application runs on the student's own machine via <code class="kbd">python app.py</code> inside VS Code — no Google Colab, no third-party AI API, no external hosting. When a public link is needed for a demo, it is created on-demand with the student's own <code class="kbd">localtunnel</code> session, which can be started and stopped at will, keeping the server fully under the developer's control at all times.</p>
+</div>
+
+{% endblock %}

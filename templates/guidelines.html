@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Guidelines — EcoSort AI{% endblock %}
+{% block content %}
+
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;">Segregation Guidelines</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;">Detailed, category-wise disposal guidance — the same knowledge base the detector and EcoBot draw from.</p>
+
+<div class="category-grid">
+  {% for g in guidelines %}
+  <div class="cat-card">
+    <span class="dot" style="background:{{ g.color }}"></span><span class="pill" style="background:{{ g.color }}22;color:{{ g.color }};">{{ g.bin }}</span>
+    <h4>{{ g.title }}</h4>
+    <p>{{ g.summary }}</p>
+    <strong style="font-size:.82rem;color:var(--text-dim);">Common examples:</strong>
+    <p style="margin-top:4px;">{{ g.examples | join(', ') }}</p>
+    <strong style="font-size:.82rem;color:var(--text-dim);">Guidelines:</strong>
+    <ul>
+      {% for tip in g.guidelines %}
+      <li>{{ tip }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

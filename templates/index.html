@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}EcoSort AI — Smart Waste Segregation{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-text">
+    <span class="eyebrow">♻ Computer Vision · Class XII Project</span>
+    <h1>Segregate waste <span>instantly</span> with AI, not guesswork.</h1>
+    <p>EcoSort AI uses a real-time, multi-object detection model to identify what you're holding up to the camera and tells you exactly which bin it belongs in — biodegradable, recyclable, non-recyclable, e-waste or hazardous — with zero cloud dependency and full local control.</p>
+    <div class="hero-cta">
+      <a href="{{ url_for('detect_page') }}" class="btn btn-primary">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Try Live Detection
+      </a>
+      <a href="{{ url_for('guidelines_page') }}" class="btn btn-ghost">View Guidelines</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="scan-frame">
+      <span class="emoji-item" style="top:18%;left:14%;">🍌</span>
+      <span class="emoji-item" style="top:52%;left:58%;">📱</span>
+      <span class="emoji-item" style="top:66%;left:16%;">🧴</span>
+      <div class="box" style="top:14%;left:10%;width:100px;height:90px;" data-label="biodegradable"></div>
+      <div class="box" style="top:48%;left:54%;width:90px;height:110px;border-color:#ff9800;" data-label="e-waste"></div>
+      <div class="box" style="top:62%;left:12%;width:96px;height:80px;border-color:#2196f3;" data-label="recyclable"></div>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+</section>
+
+<div class="stat-strip">
+  <div class="card"><div class="num">5</div><div class="lbl">Waste Categories</div></div>
+  <div class="card"><div class="num">80</div><div class="lbl">Object Classes Detected</div></div>
+  <div class="card"><div class="num">100%</div><div class="lbl">Runs Locally / Offline</div></div>
+  <div class="card"><div class="num">Live</div><div class="lbl">Real-Time Webcam CV</div></div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Everything an examiner wants to see</h2>
+  <p class="section-sub">Multi-object detection, classification logic, real disposal guidelines, and a bit of extra polish.</p>
+  <div class="feature-grid">
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg></div>
+      <h3>Live Multi-Object Detection</h3>
+      <p>YOLOv8-powered webcam feed detects several waste items in a single frame simultaneously, with bounding boxes and confidence scores.</p>
+    </div>
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2 4 6v6c0 5 3.6 8.7 8 10 4.4-1.3 8-5 8-10V6l-8-4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      <h3>5-Way Waste Classification</h3>
+      <p>A rule-based reasoning engine maps every detection to Biodegradable, Recyclable, Non-Recyclable, E-Waste or Hazardous.</p>
+    </div>
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <h3>Voice-Guided Disposal</h3>
+      <p>Built-in text-to-speech reads out disposal instructions the moment an item is identified — hands-free and demo-friendly.</p>
+    </div>
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <h3>Eco-Points Dashboard</h3>
+      <p>Every correctly segregated item earns points, streaks and badges — gamifying good waste-disposal habits.</p>
+    </div>
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      <h3>EcoBot Assistant</h3>
+      <p>An offline, rule-based chatbot answers waste-disposal questions instantly — no internet or API key needed.</p>
+    </div>
+    <div class="card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg></div>
+      <h3>You Control the Server</h3>
+      <p>Runs on your own machine via Flask in VS Code, shareable through your own localtunnel link — no third-party hosting.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section card" style="text-align:center;">
+  <h2 style="margin-top:0;">Ready to sort some waste?</h2>
+  <p style="color:var(--text-dim);max-width:56ch;margin:0 auto 22px;">Point your webcam at a bottle, a banana peel, or an old phone and watch EcoSort AI classify it in real time.</p>
+  <a href="{{ url_for('detect_page') }}" class="btn btn-primary">Launch Detector</a>
+</div>
+
+{% endblock %}
