@@ -12,6 +12,7 @@
 
   const startBtn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
+  const captureBtn = document.getElementById("captureBtn");
   const fileInput = document.getElementById("fileInput");
   const analyzeBtn = document.getElementById("analyzeBtn");
 
@@ -23,7 +24,6 @@
   const detCount = document.getElementById("detCount");
 
   let stream = null;
-  let loopTimer = null;
   let busy = false;
   let lastSpokenLabel = null;
   let uploadedDataUrl = null;
@@ -62,16 +62,20 @@
   tabUpload.addEventListener("click", showUploadTab);
 
   // ---------------- Webcam ----------------
+  // Detection now calls a paid, rate-limited cloud API per shot (instead of
+  // free local inference), so the camera stream is just for framing —
+  // analysis only runs when the user taps "Capture & Analyze", not on a
+  // continuous auto-loop.
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       video.srcObject = stream;
       startBtn.disabled = true;
       stopBtn.disabled = false;
+      captureBtn.disabled = false;
       video.onloadedmetadata = () => {
         overlay.width = video.videoWidth;
         overlay.height = video.videoHeight;
-        loop();
       };
     } catch (err) {
       alert("Could not access webcam: " + err.message);
@@ -79,34 +83,35 @@
   }
 
   function stopCamera() {
-    if (loopTimer) clearTimeout(loopTimer);
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       stream = null;
     }
     startBtn.disabled = false;
     stopBtn.disabled = true;
+    captureBtn.disabled = true;
     ctx.clearRect(0, 0, overlay.width, overlay.height);
   }
 
   startBtn.addEventListener("click", startCamera);
   stopBtn.addEventListener("click", stopCamera);
 
-  async function loop() {
-    if (!stream) return;
-    if (!busy) {
-      busy = true;
-      const dataUrl = grabFrame(video);
-      try {
-        const data = await sendForDetection(dataUrl, "webcam");
-        renderDetections(data.detections, overlay.width, overlay.height);
-      } catch (e) {
-        console.error(e);
-      }
-      busy = false;
+  captureBtn.addEventListener("click", async () => {
+    if (!stream || busy) return;
+    busy = true;
+    captureBtn.disabled = true;
+    captureBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
+    const dataUrl = grabFrame(video);
+    try {
+      const data = await sendForDetection(dataUrl, "webcam");
+      renderDetections(data.detections, overlay.width, overlay.height);
+    } catch (e) {
+      alert("Detection failed: " + e.message);
     }
-    loopTimer = setTimeout(loop, 900);
-  }
+    busy = false;
+    captureBtn.disabled = !stream;
+    captureBtn.textContent = window.I18N ? window.I18N.t("detect.capture_analyze", "Capture & Analyze") : "Capture & Analyze";
+  });
 
   function grabFrame(source) {
     const c = document.createElement("canvas");
