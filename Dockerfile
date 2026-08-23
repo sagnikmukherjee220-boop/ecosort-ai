@@ -7,10 +7,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install CPU-only torch first — the default ultralytics pulls in the much
-# larger CUDA build, which is wasted size/build-time on a CPU-only host.
+# Install matching CPU-only torch + torchvision together, from the same
+# index, so they resolve to a compatible pair (mixing indices caused a
+# torch/torchvision ABI mismatch: "operator torchvision::nms does not
+# exist"). The default ultralytics pull-in is also the much larger CUDA
+# build, wasted size/build-time on a CPU-only host.
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
