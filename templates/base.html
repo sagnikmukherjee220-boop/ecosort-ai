@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#07130f">
 <title>{% block title %}EcoSort AI — Waste Segregation{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ versioned_static('css/style.css') }}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♻️</text></svg>">
 </head>
 <body>
@@ -51,11 +51,11 @@
 </main>
 
 <footer class="site-footer">
-  <p data-i18n="common.footer">EcoSort AI &middot; Class XII Computer Science Investigatory Project &middot; Built with YOLOv8 + Flask &middot; Runs fully offline &amp; under your control</p>
+  <p data-i18n="common.footer">EcoSort AI &middot; Class XII Computer Science Investigatory Project &middot; Built with Flask &amp; a vision-language model</p>
 </footer>
 
-<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ versioned_static('js/i18n.js') }}"></script>
+<script src="{{ versioned_static('js/main.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

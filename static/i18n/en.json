@@ -9,7 +9,7 @@
     "about": "About"
   },
   "common": {
-    "footer": "EcoSort AI · Class XII Computer Science Investigatory Project · Built with YOLOv8 + Flask · Runs fully offline & under your control",
+    "footer": "EcoSort AI · Class XII Computer Science Investigatory Project · Built with Flask & a vision-language model",
     "language": "Language"
   },
   "detect": {

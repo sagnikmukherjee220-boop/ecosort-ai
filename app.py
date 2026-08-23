@@ -16,7 +16,7 @@ import json
 import os
 import time
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for
 from huggingface_hub import InferenceClient
 from PIL import Image
 
@@ -25,6 +25,19 @@ import waste_map
 from chatbot_engine import get_response
 
 app = Flask(__name__)
+
+
+@app.template_global()
+def versioned_static(filename):
+    """url_for('static', ...) plus a ?v=<mtime> cache-buster, so browsers
+    fetch the new copy of a JS/CSS file after a deploy instead of serving a
+    stale cached one (bit us once already after an update)."""
+    path = os.path.join(app.static_folder, filename)
+    try:
+        version = int(os.path.getmtime(path))
+    except OSError:
+        version = 0
+    return url_for("static", filename=filename) + f"?v={version}"
 
 # ----------------------------------------------------------------------
 # Object identification runs on a vision-language model via Hugging Face's

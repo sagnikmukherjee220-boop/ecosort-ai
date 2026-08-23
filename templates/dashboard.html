@@ -45,6 +45,6 @@
 
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ versioned_static('vendor/chart.umd.min.js') }}"></script>
+<script src="{{ versioned_static('js/dashboard.js') }}"></script>
 {% endblock %}
