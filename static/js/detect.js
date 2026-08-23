@@ -27,18 +27,17 @@
 
   let stream = null;
   let busy = false;
-  let lastSpokenLabel = null;
   let uploadedDataUrl = null;
   let currentConf = 0.35;
   let lastDetections = []; // re-rendered when the language changes
   let lastRenderDims = null;
   let voiceEnabled = true;
-  let lastSpokenDetection = null;
+  let lastSpokenBatch = [];
 
   // ---------------- Voice play/pause button ----------------
   // Tap to mute/unmute. If speech is currently playing, tapping stops it
   // right away (pause behavior). If voice is off and there's a previous
-  // result, turning it back on replays that result immediately.
+  // batch of results, turning it back on replays all of them.
   function updateVoiceBtnIcon() {
     voiceIconOn.style.display = voiceEnabled ? "" : "none";
     voiceIconOff.style.display = voiceEnabled ? "none" : "";
@@ -51,8 +50,8 @@
       voiceEnabled = false;
     } else {
       voiceEnabled = !voiceEnabled;
-      if (voiceEnabled && lastSpokenDetection) {
-        speakDetection(lastSpokenDetection);
+      if (voiceEnabled && lastSpokenBatch.length) {
+        speakAllDetections(lastSpokenBatch);
       }
     }
     updateVoiceBtnIcon();
@@ -216,7 +215,7 @@
   }
 
   // ---------------- Rendering ----------------
-  function renderDetections(detections, w, h, refEl) {
+  function renderDetections(detections, w, h, refEl, isNewCapture = true) {
     lastDetections = detections;
     lastRenderDims = { w, h };
 
@@ -268,25 +267,26 @@
       detList.appendChild(row);
     });
 
-    // speak the most confident *new* waste item
+    // read out every detected waste item (not just the top one) — this is
+    // a one-shot batch per Capture & Analyze click, not a continuous
+    // stream, so there's no risk of it babbling on repeatedly.
     const wasteOnly = detections.filter((d) => d.category !== "ignore");
-    if (wasteOnly.length) {
-      const top = wasteOnly.reduce((a, b) => (a.confidence > b.confidence ? a : b));
-      lastSpokenDetection = top;
-      const key = top.label + top.category;
-      if (voiceEnabled && key !== lastSpokenLabel) {
-        lastSpokenLabel = key;
-        speakDetection(top);
-      }
+    lastSpokenBatch = wasteOnly;
+    if (isNewCapture && voiceEnabled && wasteOnly.length) {
+      speakAllDetections(wasteOnly);
     }
   }
 
-  function speakDetection(d) {
-    const name = objectName(d.label);
-    const catLabel = categoryField(d.category, "label", d.category_label);
-    const tip = categoryField(d.category, "tip", d.tip);
+  function speakAllDetections(items) {
     const introWord = window.I18N ? window.I18N.t("detect.speak_this_is", "This is") : "This is";
-    speak(`${name}. ${introWord} ${catLabel}. ${tip}`);
+    const text = items
+      .map((d) => {
+        const name = objectName(d.label);
+        const catLabel = categoryField(d.category, "label", d.category_label);
+        return `${name}. ${introWord} ${catLabel}.`;
+      })
+      .join(" ");
+    speak(text);
   }
 
   function pickVoice(langCode) {
@@ -313,12 +313,13 @@
     window.speechSynthesis.speak(utter);
   }
 
-  // Re-render with translated labels (and re-speak in the new voice) when the
-  // language changes, so switching language mid-session updates everything
-  // already on screen instead of only future detections.
+  // Re-render with translated labels when the language changes, so
+  // switching language mid-session updates everything already on screen.
+  // Doesn't auto-speak — that would be surprising just from switching a
+  // dropdown; use the voice button to hear it in the new language.
   document.addEventListener("i18n:change", () => {
     if (lastRenderDims) {
-      renderDetections(lastDetections, lastRenderDims.w, lastRenderDims.h);
+      renderDetections(lastDetections, lastRenderDims.w, lastRenderDims.h, undefined, false);
     }
   });
 })();
