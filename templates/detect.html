@@ -24,13 +24,20 @@
       </button>
       <button class="btn btn-ghost" id="stopBtn" disabled><span data-i18n="detect.stop">Stop</span></button>
       <button class="btn btn-primary" id="captureBtn" disabled><span data-i18n="detect.capture_analyze">Capture &amp; Analyze</span></button>
-      <label class="toggle-row"><input type="checkbox" id="voiceToggle" checked> 🔊 <span data-i18n="detect.voice_guidance">Voice guidance</span></label>
-      <label class="toggle-row"><input type="checkbox" id="ignoreToggle" checked> <span data-i18n="detect.hide_nonwaste">Hide non-waste objects</span></label>
     </div>
 
     <div class="detect-controls" id="uploadControls" style="display:none;">
       <input type="file" id="fileInput" accept="image/*" class="btn btn-ghost">
       <button class="btn btn-primary" id="analyzeBtn" disabled><span data-i18n="detect.analyze">Analyze Photo</span></button>
+    </div>
+
+    <div class="detect-controls">
+      <button type="button" class="btn btn-ghost voice-btn" id="voiceBtn" aria-pressed="true" data-i18n-title="detect.voice_guidance" title="Voice guidance">
+        <svg class="icon-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+        <svg class="icon-off" viewBox="0 0 24 24" style="display:none;"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 5M21 9l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span data-i18n="detect.voice_guidance">Voice guidance</span>
+      </button>
+      <label class="toggle-row"><input type="checkbox" id="ignoreToggle" checked> <span data-i18n="detect.hide_nonwaste">Hide non-waste objects</span></label>
     </div>
 
     <div class="sensitivity-row">

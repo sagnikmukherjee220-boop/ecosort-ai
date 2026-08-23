@@ -16,7 +16,9 @@
   const fileInput = document.getElementById("fileInput");
   const analyzeBtn = document.getElementById("analyzeBtn");
 
-  const voiceToggle = document.getElementById("voiceToggle");
+  const voiceBtn = document.getElementById("voiceBtn");
+  const voiceIconOn = voiceBtn.querySelector(".icon-on");
+  const voiceIconOff = voiceBtn.querySelector(".icon-off");
   const ignoreToggle = document.getElementById("ignoreToggle");
   const sensitivityBtns = document.getElementById("sensitivityBtns");
 
@@ -30,6 +32,32 @@
   let currentConf = 0.35;
   let lastDetections = []; // re-rendered when the language changes
   let lastRenderDims = null;
+  let voiceEnabled = true;
+  let lastSpokenDetection = null;
+
+  // ---------------- Voice play/pause button ----------------
+  // Tap to mute/unmute. If speech is currently playing, tapping stops it
+  // right away (pause behavior). If voice is off and there's a previous
+  // result, turning it back on replays that result immediately.
+  function updateVoiceBtnIcon() {
+    voiceIconOn.style.display = voiceEnabled ? "" : "none";
+    voiceIconOff.style.display = voiceEnabled ? "none" : "";
+    voiceBtn.setAttribute("aria-pressed", String(voiceEnabled));
+    voiceBtn.classList.toggle("active", voiceEnabled);
+  }
+  voiceBtn.addEventListener("click", () => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      voiceEnabled = false;
+    } else {
+      voiceEnabled = !voiceEnabled;
+      if (voiceEnabled && lastSpokenDetection) {
+        speakDetection(lastSpokenDetection);
+      }
+    }
+    updateVoiceBtnIcon();
+  });
+  updateVoiceBtnIcon();
 
   // ---------------- Sensitivity presets (replaces raw numeric slider) ----------------
   sensitivityBtns.addEventListener("click", (e) => {
@@ -242,10 +270,11 @@
 
     // speak the most confident *new* waste item
     const wasteOnly = detections.filter((d) => d.category !== "ignore");
-    if (wasteOnly.length && voiceToggle.checked) {
+    if (wasteOnly.length) {
       const top = wasteOnly.reduce((a, b) => (a.confidence > b.confidence ? a : b));
+      lastSpokenDetection = top;
       const key = top.label + top.category;
-      if (key !== lastSpokenLabel) {
+      if (voiceEnabled && key !== lastSpokenLabel) {
         lastSpokenLabel = key;
         speakDetection(top);
       }
