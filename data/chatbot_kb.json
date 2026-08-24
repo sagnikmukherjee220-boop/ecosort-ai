@@ -27,7 +27,7 @@
   {
     "id": "how_it_works",
     "patterns": ["how does this work", "how does it work", "how do you detect", "how does detection work", "algorithm", "model used", "yolo", "cv model"],
-    "response": "This project uses a YOLOv8 object-detection model to spot multiple items in a live webcam feed or an uploaded photo, then a rule-based classification engine maps each detected object to a waste category (biodegradable, recyclable, non-recyclable, e-waste or hazardous) with disposal guidance - all running locally, no cloud required."
+    "response": "This project sends a live webcam frame or an uploaded photo to a vision-language AI model, which identifies every object it sees and classifies each one into a waste category (biodegradable, recyclable, non-recyclable, e-waste or hazardous) with disposal guidance. Unlike older fixed-class detectors, it can recognise open-ended, real-world objects rather than being limited to a small predefined list."
   },
   {
     "id": "points",
