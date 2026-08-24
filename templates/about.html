@@ -11,33 +11,33 @@
 </div>
 
 <div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">How It Works — Technical Pipeline</h3>
+  <h3 style="margin-top:0;">How It Works</h3>
   <ol style="color:var(--text-dim);line-height:1.9;padding-left:20px;">
     <li><strong style="color:var(--text)">Capture:</strong> The browser grabs frames from the webcam (or an uploaded photo) using the HTML5 Media/Canvas APIs — entirely client-side.</li>
-    <li><strong style="color:var(--text)">Detection:</strong> Each frame is sent to a local Flask endpoint, which runs it through a <strong>YOLOv8</strong> object-detection model (Ultralytics, pretrained on the COCO dataset — 80 everyday object classes), returning bounding boxes, class labels and confidence scores for every object found. This is the <em>multi-object detection</em> stage.</li>
-    <li><strong style="color:var(--text)">Classification:</strong> A rule-based reasoning engine (<code class="kbd">waste_map.py</code>) maps each detected object class to one of five waste-segregation categories — Biodegradable, Recyclable, Non-Recyclable, E-Waste or Hazardous — using a curated lookup table grounded in real municipal solid-waste guidelines.</li>
-    <li><strong style="color:var(--text)">Guidance:</strong> The matched category's disposal tip is displayed on-screen and read aloud via the Web Speech API, and the detection is logged to a local SQLite database for the dashboard, streaks and eco-points.</li>
+    <li><strong style="color:var(--text)">Identification:</strong> Each frame is sent to a vision-language AI model, which names every object it sees and assigns each one a waste category directly — not limited to a small fixed list of trainable classes, so it can recognise open-ended, real-world objects.</li>
+    <li><strong style="color:var(--text)">Category metadata:</strong> <code class="kbd">waste_map.py</code> owns what each of the five categories — Biodegradable, Recyclable, Non-Recyclable, E-Waste, Hazardous — actually means: bin name, color, disposal tip, points. The model only picks the category; the presentation stays consistent.</li>
+    <li><strong style="color:var(--text)">Guidance:</strong> The matched category's disposal tip is displayed on-screen and read aloud (in your chosen language), and the detection is logged to a database for the dashboard, streaks and eco-points.</li>
   </ol>
 </div>
 
 <div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">Why Pretrained Detection Instead of Training From Zero?</h3>
-  <p style="color:var(--text-dim);line-height:1.7;">A custom model trained on a small, student-collected image set is fragile — lighting, background clutter and unseen objects on the exam day can easily break it. EcoSort AI instead uses a robust, industry-grade, pretrained detector for perception, and puts the project's original engineering into the <em>classification and reasoning layer</em> on top — the same "detect, then reason" architecture used in real-world recycling-robot systems (e.g. AI-guided material recovery facilities). This keeps live demos reliable while still requiring genuine design decisions: category mapping, confidence thresholds, gamification logic and the offline chatbot.</p>
+  <h3 style="margin-top:0;">Why an AI Model Instead of a Fixed Object List?</h3>
+  <p style="color:var(--text-dim);line-height:1.7;">Traditional lightweight object detectors only recognise a small predefined set of classes (commonly around 80 everyday objects), so anything outside that list is invisible to them. EcoSort AI instead uses a vision-language model that can identify and reason about arbitrary objects, giving genuinely open-ended recognition at the cost of needing an internet connection and an API call per detection, rather than running fully offline.</p>
 </div>
 
 <div class="card" style="margin-bottom:20px;">
   <h3 style="margin-top:0;">Tech Stack</h3>
   <div class="category-grid" style="margin-top:10px;">
     <div class="cat-card"><h4>Backend</h4><p>Python, Flask, SQLite</p></div>
-    <div class="cat-card"><h4>Computer Vision</h4><p>Ultralytics YOLOv8 (PyTorch), OpenCV, Pillow</p></div>
+    <div class="cat-card"><h4>AI</h4><p>Vision-language model via Hugging Face Inference Providers</p></div>
     <div class="cat-card"><h4>Frontend</h4><p>HTML5, CSS3, vanilla JavaScript, Chart.js</p></div>
-    <div class="cat-card"><h4>Extras</h4><p>Web Speech API (voice), difflib-based chatbot, localtunnel for public demo access</p></div>
+    <div class="cat-card"><h4>Extras</h4><p>Web Speech API (voice, multilingual), EcoBot chat assistant</p></div>
   </div>
 </div>
 
 <div class="card">
-  <h3 style="margin-top:0;">Deployment &amp; Control</h3>
-  <p style="color:var(--text-dim);line-height:1.7;">The entire application runs on the student's own machine via <code class="kbd">python app.py</code> inside VS Code — no Google Colab, no third-party AI API, no external hosting. When a public link is needed for a demo, it is created on-demand with the student's own <code class="kbd">localtunnel</code> session, which can be started and stopped at will, keeping the server fully under the developer's control at all times.</p>
+  <h3 style="margin-top:0;">Deployment</h3>
+  <p style="color:var(--text-dim);line-height:1.7;">The app is deployed as a Docker container to Render, giving it a permanent public URL that works from any device without needing anyone's laptop to stay on. You can also run it locally with <code class="kbd">python app.py</code> for development.</p>
 </div>
 
 {% endblock %}
