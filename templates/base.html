@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ versioned_static('css/style.css') }}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♻️</text></svg>">
 </head>
-<body>
+<body data-logged-in="{{ 'true' if current_user else 'false' }}">
 
 <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
 
@@ -42,6 +42,17 @@
       <span data-i18n="nav.about">About</span></a></li>
     <li class="nav-lang">
       <select class="lang-select" aria-label="Language / भाषा"></select>
+    </li>
+    <li class="nav-auth">
+      {% if current_user %}
+        <div class="user-chip">
+          {% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" referrerpolicy="no-referrer">{% endif %}
+          <span>{{ current_user.name }}</span>
+          <a href="{{ url_for('auth_logout') }}" class="btn btn-ghost btn-sm" data-i18n="nav.logout">Log out</a>
+        </div>
+      {% else %}
+        <a href="{{ url_for('auth_login_google') }}" class="btn btn-ghost btn-sm" data-i18n="nav.signin">Sign in</a>
+      {% endif %}
     </li>
   </ul>
 </nav>

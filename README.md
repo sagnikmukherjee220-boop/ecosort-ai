@@ -83,32 +83,59 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-## 2. Run the website
+## 2. (Optional) Set up Google sign-in
 
-Set your token as an environment variable, then start the app:
+The homepage's welcome slideshow offers "Sign in with Google" or "Continue
+as Guest" — guest mode works with zero setup. To enable real Google
+sign-in:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+   create an OAuth 2.0 Client ID (Application type: **Web application**).
+2. Add these as **Authorized redirect URIs**:
+   `http://localhost:5000/auth/callback` (local dev) and
+   `https://<your-render-domain>/auth/callback` (production).
+3. Copy the generated **Client ID** and **Client Secret**.
+
+## 3. Run the website
+
+Set your tokens as environment variables, then start the app:
 
 ```powershell
-$env:HF_TOKEN = "hf_your_token_here"    # PowerShell
+$env:HF_TOKEN = "hf_your_token_here"                # PowerShell
+$env:GOOGLE_CLIENT_ID = "your_google_client_id"
+$env:GOOGLE_CLIENT_SECRET = "your_google_client_secret"
+$env:FLASK_SECRET_KEY = "any_long_random_string"     # keeps logins across restarts
 python app.py
 ```
 ```bash
-export HF_TOKEN=hf_your_token_here      # macOS/Linux
+export HF_TOKEN=hf_your_token_here                  # macOS/Linux
+export GOOGLE_CLIENT_ID=your_google_client_id
+export GOOGLE_CLIENT_SECRET=your_google_client_secret
+export FLASK_SECRET_KEY=any_long_random_string
 python app.py
 ```
+
+If you skip `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, the site still works
+fine — the "Sign in with Google" button just won't complete (Guest mode is
+unaffected).
 
 Open **http://127.0.0.1:5000** in your browser. Allow camera access when
 prompted on the Detect page.
 
-## 3. Deploy permanently (Render.com — free)
+## 4. Deploy permanently (Render.com — free)
 
 This repo includes a `Dockerfile` ready for Render's free Web Service tier:
 
 1. Push this repo to GitHub.
 2. On [render.com](https://render.com), **New +** → **Web Service** → connect
    the repo. Render auto-detects the `Dockerfile`. Instance Type: **Free**.
-3. In the service's **Environment** tab, add a secret: `HF_TOKEN` = your
-   Hugging Face token (never commit this to the repo).
-4. Deploy. You'll get a permanent public URL that works from any device.
+3. In the service's **Environment** tab, add these secrets: `HF_TOKEN`,
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FLASK_SECRET_KEY` (never
+   commit any of these to the repo).
+4. Add your Render URL's `/auth/callback` (e.g.
+   `https://ecosort-ai-8bps.onrender.com/auth/callback`) to the OAuth
+   client's Authorized redirect URIs in Google Cloud Console.
+5. Deploy. You'll get a permanent public URL that works from any device.
 
 **Known limitations of the free tier:**
 - Sleeps after ~15 minutes idle; the next visit takes ~30-60s to wake up.

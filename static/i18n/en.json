@@ -6,7 +6,9 @@
     "dashboard": "Dashboard",
     "guidelines": "Guidelines",
     "chatbot": "EcoBot",
-    "about": "About"
+    "about": "About",
+    "signin": "Sign in",
+    "logout": "Log out"
   },
   "common": {
     "footer": "EcoSort AI · Built with Flask & a vision-language model",
@@ -34,6 +36,22 @@
     "empty_state_upload": "No waste items detected yet. Point the camera at an object.",
     "speak_this_is": "This is",
     "not_waste": "Not a waste item"
+  },
+  "intro": {
+    "skip": "Skip",
+    "next": "Next →",
+    "google": "Sign in with Google",
+    "guest": "Continue as Guest",
+    "s1_title": "Ready to enter the world of clean, smart waste sorting?",
+    "s1_text": "No more guessing which bin something belongs in.",
+    "s2_title": "Point your camera at literally anything.",
+    "s2_text": "Our AI doesn't need it memorised — it just knows.",
+    "s3_title": "Get guidance read aloud, in your own language.",
+    "s3_text": "English, Hindi, Bengali, Tamil, Telugu or Marathi — your choice.",
+    "s4_title": "Every scan earns points.",
+    "s4_text": "Turn recycling into a daily habit, not a chore.",
+    "s5_title": "Welcome to EcoSort AI",
+    "s5_text": "Sign in to save your progress, or jump straight in as a guest."
   },
   "categories": {
     "biodegradable": { "label": "Biodegradable", "bin": "Green Bin", "tip": "Compostable organic waste. Breaks down naturally." },

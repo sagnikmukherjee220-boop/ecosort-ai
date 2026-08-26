@@ -32,6 +32,36 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            google_sub TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL,
+            name TEXT NOT NULL,
+            picture TEXT,
+            last_login TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def upsert_user(google_sub, email, name, picture):
+    """Insert a user on first Google sign-in, or refresh their profile/last_login
+    on every subsequent one. Eco-points/history stay shared/global (unchanged) —
+    this table exists only to remember who's signed in, for the navbar greeting."""
+    conn = get_conn()
+    conn.execute(
+        """
+        INSERT INTO users (google_sub, email, name, picture, last_login)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(google_sub) DO UPDATE SET
+            email=excluded.email, name=excluded.name, picture=excluded.picture, last_login=excluded.last_login
+        """,
+        (google_sub, email, name, picture, datetime.datetime.now().isoformat(timespec="seconds")),
+    )
     conn.commit()
     conn.close()
 

@@ -16,7 +16,8 @@ import json
 import os
 import time
 
-from flask import Flask, render_template, request, jsonify, url_for
+from authlib.integrations.flask_client import OAuth
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from huggingface_hub import InferenceClient
 from PIL import Image
 
@@ -25,6 +26,30 @@ import waste_map
 from chatbot_engine import get_response
 
 app = Flask(__name__)
+# Session cookies are signed with this key. Set FLASK_SECRET_KEY as an env
+# var (like HF_TOKEN) in production so logins survive a restart instead of
+# invalidating every session; falls back to a random one for local dev.
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(24)
+
+# ----------------------------------------------------------------------
+# Google sign-in (optional — visitors can also "Continue as Guest"). Needs
+# GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET env vars from a Google Cloud
+# Console OAuth client. Only used for identity (name/photo in the navbar);
+# eco-points/dashboard history stays shared/global either way.
+# ----------------------------------------------------------------------
+oauth = OAuth(app)
+oauth.register(
+    name="google",
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+
+@app.context_processor
+def inject_user():
+    return {"current_user": session.get("user")}
 
 
 @app.template_global()
@@ -202,6 +227,34 @@ def about_page():
 def certificate_page():
     stats = db.get_stats()
     return render_template("certificate.html", stats=stats)
+
+
+# ------------------------------- AUTH ------------------------------------
+
+@app.route("/auth/login/google")
+def auth_login_google():
+    redirect_uri = url_for("auth_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route("/auth/callback")
+def auth_callback():
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get("userinfo") or {}
+    google_sub = userinfo.get("sub")
+    email = userinfo.get("email", "")
+    name = userinfo.get("name") or email or "there"
+    picture = userinfo.get("picture")
+    if google_sub:
+        db.upsert_user(google_sub, email, name, picture)
+        session["user"] = {"name": name, "email": email, "picture": picture}
+    return redirect(url_for("home"))
+
+
+@app.route("/auth/logout")
+def auth_logout():
+    session.pop("user", None)
+    return redirect(url_for("home"))
 
 
 # ------------------------------- API ------------------------------------
