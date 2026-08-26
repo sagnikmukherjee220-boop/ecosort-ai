@@ -110,7 +110,9 @@ def decode_image(data_url_or_file):
     if hasattr(data_url_or_file, "read"):
         img = Image.open(data_url_or_file.stream).convert("RGB")
         buf = io.BytesIO()
-        img.save(buf, format="JPEG")
+        # Quality 92 (PIL's default ~75 was blurring fine detail like small
+        # text/logos on packaging, contributing to misidentifications).
+        img.save(buf, format="JPEG", quality=92)
         data_uri = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
     else:
         header, encoded = data_url_or_file.split(",", 1)
@@ -133,7 +135,15 @@ def build_prompt(conf_threshold: float, lang: str) -> str:
 
     return (
         "You are a waste-segregation assistant. Identify every distinct physical "
-        f"object in this image. {inclusiveness}\n"
+        f"object in this image. {inclusiveness} Look carefully at every part of "
+        "the image, including small or partially hidden objects (e.g. a remote "
+        "control, a charger, a cable) — don't stop at the first few obvious items.\n"
+        "Be careful with ambiguous packaging: only name a specific sensitive "
+        "product (tobacco, alcohol, weapons, drugs, etc.) if you're genuinely "
+        "confident from clear visual evidence like readable text or branding. "
+        "If you're not sure, describe it generically instead (e.g. 'small box' "
+        "or 'packet') rather than guessing a specific, potentially wrong and "
+        "sensitive label.\n"
         f"For each object, write its name in {lang_name}, and classify it into "
         f"exactly one of these categories: {category_list}. Use 'ignore' for "
         "anything that isn't a discardable waste item (people, animals, "

@@ -166,7 +166,9 @@
     c.width = source.videoWidth || source.naturalWidth;
     c.height = source.videoHeight || source.naturalHeight;
     c.getContext("2d").drawImage(source, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.7);
+    // 0.92 (was 0.7) — the extra compression was blurring fine detail like
+    // small text/logos on packaging, contributing to misidentifications.
+    return c.toDataURL("image/jpeg", 0.92);
   }
 
   // ---------------- Upload ----------------
