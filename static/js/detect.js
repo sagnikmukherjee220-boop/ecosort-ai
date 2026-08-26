@@ -13,6 +13,7 @@
   const startBtn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
   const captureBtn = document.getElementById("captureBtn");
+  const retakeBtn = document.getElementById("retakeBtn");
   const fileInput = document.getElementById("fileInput");
   const analyzeBtn = document.getElementById("analyzeBtn");
 
@@ -28,6 +29,7 @@
   let stream = null;
   let busy = false;
   let uploadedDataUrl = null;
+  let capturedDataUrl = null; // frozen webcam frame, set once "Capture & Analyze" is clicked
   let currentConf = 0.35;
   let lastDetections = []; // re-rendered when the language changes
   let lastRenderDims = null;
@@ -59,11 +61,21 @@
   updateVoiceBtnIcon();
 
   // ---------------- Sensitivity presets (replaces raw numeric slider) ----------------
+  // If a frame is already frozen/captured (webcam) or a photo is loaded
+  // (upload), switching sensitivity re-analyzes that *same* image instead
+  // of requiring a fresh capture — the whole point of freezing the frame.
   sensitivityBtns.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-conf]");
     if (!btn) return;
     currentConf = parseFloat(btn.dataset.conf);
     sensitivityBtns.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+    if (capturedDataUrl) {
+      const idle = window.I18N ? window.I18N.t("detect.retake", "Retake") : "Retake";
+      runAnalysis(capturedDataUrl, "webcam", retakeBtn, idle);
+    } else if (uploadedDataUrl) {
+      const idle = window.I18N ? window.I18N.t("detect.analyze", "Analyze Photo") : "Analyze Photo";
+      runAnalysis(uploadedDataUrl, "upload", analyzeBtn, idle);
+    }
   });
 
   // ---------------- Tab switching ----------------
@@ -117,28 +129,37 @@
     startBtn.disabled = false;
     stopBtn.disabled = true;
     captureBtn.disabled = true;
+    resumeLive();
     ctx.clearRect(0, 0, overlay.width, overlay.height);
   }
 
   startBtn.addEventListener("click", startCamera);
   stopBtn.addEventListener("click", stopCamera);
 
+  // Freeze the current frame instead of re-grabbing a fresh one on every
+  // click, so switching "Detection sensitivity" afterwards re-analyzes the
+  // *same* shot rather than needing the object held in place again.
   captureBtn.addEventListener("click", async () => {
     if (!stream || busy) return;
-    busy = true;
-    captureBtn.disabled = true;
-    captureBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
-    const dataUrl = grabFrame(video);
-    try {
-      const data = await sendForDetection(dataUrl, "webcam");
-      renderDetections(data.detections, overlay.width, overlay.height);
-    } catch (e) {
-      alert("Detection failed: " + e.message);
-    }
-    busy = false;
-    captureBtn.disabled = !stream;
-    captureBtn.textContent = window.I18N ? window.I18N.t("detect.capture_analyze", "Capture & Analyze") : "Capture & Analyze";
+    capturedDataUrl = grabFrame(video);
+    video.pause();
+    const idle = window.I18N ? window.I18N.t("detect.capture_analyze", "Capture & Analyze") : "Capture & Analyze";
+    await runAnalysis(capturedDataUrl, "webcam", captureBtn, idle);
+    captureBtn.style.display = "none";
+    retakeBtn.style.display = "";
   });
+
+  function resumeLive() {
+    capturedDataUrl = null;
+    captureBtn.style.display = "";
+    retakeBtn.style.display = "none";
+    if (stream) video.play();
+    detCount.textContent = "0";
+    const emptyText = window.I18N ? window.I18N.t("detect.empty_state_webcam") : "Start the camera or upload a photo to see detections here.";
+    detList.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+  }
+
+  retakeBtn.addEventListener("click", resumeLive);
 
   function grabFrame(source) {
     const c = document.createElement("canvas");
@@ -166,18 +187,9 @@
     reader.readAsDataURL(file);
   });
 
-  analyzeBtn.addEventListener("click", async () => {
-    if (!uploadedDataUrl) return;
-    analyzeBtn.disabled = true;
-    analyzeBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
-    try {
-      const data = await sendForDetection(uploadedDataUrl, "upload");
-      renderDetections(data.detections, overlay.width, overlay.height, uploadPreview);
-    } catch (e) {
-      alert("Detection failed: " + e.message);
-    }
-    analyzeBtn.disabled = false;
-    analyzeBtn.textContent = window.I18N ? window.I18N.t("detect.analyze", "Analyze Photo") : "Analyze Photo";
+  analyzeBtn.addEventListener("click", () => {
+    const idle = window.I18N ? window.I18N.t("detect.analyze", "Analyze Photo") : "Analyze Photo";
+    runAnalysis(uploadedDataUrl, "upload", analyzeBtn, idle);
   });
 
   function stopAnalyzeUpload() {
@@ -187,6 +199,30 @@
   }
 
   // ---------------- API call ----------------
+  // Shared by: first webcam capture, re-analyzing a frozen/uploaded frame
+  // when sensitivity changes, and the upload-mode Analyze button. Shows its
+  // loading state on whichever button is actually visible at the time
+  // (capture vs. retake vs. analyze), not necessarily the one clicked.
+  async function runAnalysis(dataUrl, source, loadingBtn, idleText) {
+    if (!dataUrl || busy) return;
+    busy = true;
+    const wasDisabled = loadingBtn.disabled;
+    loadingBtn.disabled = true;
+    loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
+    try {
+      const data = await sendForDetection(dataUrl, source);
+      renderDetections(data.detections, overlay.width, overlay.height);
+    } catch (e) {
+      alert("Detection failed: " + e.message);
+    }
+    busy = false;
+    loadingBtn.disabled = wasDisabled;
+    loadingBtn.textContent = idleText;
+    // Guard against the camera having been stopped while this request was
+    // in flight — don't let a stale response re-enable a dead capture button.
+    if (source === "webcam" && !stream) loadingBtn.disabled = true;
+  }
+
   async function sendForDetection(dataUrl, source) {
     const lang = window.I18N ? window.I18N.lang : "en";
     const res = await fetch(`/api/detect?conf=${currentConf}`, {
