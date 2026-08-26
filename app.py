@@ -20,12 +20,21 @@ from authlib.integrations.flask_client import OAuth
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from huggingface_hub import InferenceClient
 from PIL import Image
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import db
 import waste_map
 from chatbot_engine import get_response
 
 app = Flask(__name__)
+# Render (like most hosts) terminates HTTPS at its own proxy and forwards
+# plain HTTP to the app, so Flask sees every request as http:// unless told
+# otherwise. Without this, url_for(..., _external=True) generates an
+# http:// callback URL that doesn't match the https:// one registered in
+# Google Cloud Console, and Google rejects the sign-in with
+# "redirect_uri_mismatch". ProxyFix reads the proxy's X-Forwarded-Proto
+# header to report the real scheme.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # Session cookies are signed with this key. Set FLASK_SECRET_KEY as an env
 # var (like HF_TOKEN) in production so logins survive a restart instead of
 # invalidating every session; falls back to a random one for local dev.
