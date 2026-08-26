@@ -50,23 +50,37 @@ def _build_system_prompt():
     bins = ", ".join(f"{meta['label']} ({meta['bin']})" for meta in waste_map.CATEGORY_META.values())
     return (
         "You are EcoBot, a friendly assistant on the EcoSort AI waste-segregation website. "
-        "Answer waste-disposal, recycling, and site-usage questions clearly, warmly, and "
-        "concisely (2-4 short sentences, no long essays or markdown headers). "
+        "Answer clearly, warmly, and concisely (2-4 short sentences, no long essays or "
+        "markdown headers). "
         f"The site sorts waste into these categories: {bins}. "
-        "Reference facts you can rely on:\n" + facts + "\n"
-        "If asked something unrelated to waste, recycling, or this site, answer briefly if you "
-        "genuinely know it, otherwise gently steer the conversation back to waste segregation."
+        "Reference facts you can rely on for this site specifically:\n" + facts + "\n"
+        "Beyond the site itself, you're also a knowledgeable, diversified sustainability "
+        "assistant: happily answer broader questions on composting techniques, DIY reuse/"
+        "upcycling ideas, general recycling practices, environmental facts, and eco-friendly "
+        "living, not just the five categories above. You can have a normal back-and-forth "
+        "conversation, including remembering what was said earlier in this chat. If asked "
+        "something with no connection to waste, sustainability, or the site at all, answer "
+        "briefly if you genuinely know it, otherwise say so honestly rather than guessing."
     )
 
 
-def _ai_response(user_message: str) -> str:
+MAX_HISTORY_MESSAGES = 12  # ~6 exchanges of context, enough to feel conversational without ballooning cost
+
+
+def _ai_response(history: list) -> str:
     client = _get_hf_client()
+    # `history` comes from the client (untrusted) — only pass through
+    # well-formed user/assistant turns so it can't inject a fake system
+    # message and override the prompt above.
+    safe_history = [
+        {"role": m["role"], "content": str(m["content"])[:2000]}
+        for m in history
+        if isinstance(m, dict) and m.get("role") in ("user", "assistant") and m.get("content")
+    ][-MAX_HISTORY_MESSAGES:]
+
     response = client.chat.completions.create(
         model=CHAT_MODEL,
-        messages=[
-            {"role": "system", "content": _build_system_prompt()},
-            {"role": "user", "content": user_message},
-        ],
+        messages=[{"role": "system", "content": _build_system_prompt()}] + safe_history,
         max_tokens=250,
     )
     return response.choices[0].message.content.strip()
@@ -103,10 +117,14 @@ def _rule_based_response(user_message: str) -> str:
     return FALLBACK_RESPONSES[0]
 
 
-def get_response(user_message: str) -> dict:
-    if not user_message.strip():
+def get_response(history: list) -> dict:
+    """`history` is a list of {"role": "user"|"assistant", "content": str}
+    messages in order, ending with the latest user turn."""
+    user_turns = [m for m in history if isinstance(m, dict) and m.get("role") == "user"]
+    last_message = str(user_turns[-1].get("content", "")) if user_turns else ""
+    if not last_message.strip():
         return {"reply": "Ask me anything about waste segregation!"}
     try:
-        return {"reply": _ai_response(user_message)}
+        return {"reply": _ai_response(history)}
     except Exception:
-        return {"reply": _rule_based_response(user_message)}
+        return {"reply": _rule_based_response(last_message)}
