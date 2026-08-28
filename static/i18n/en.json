@@ -132,6 +132,27 @@
     "show_details": "Show disposal steps ▾",
     "hide_details": "Hide disposal steps ▴"
   },
+  "about": {
+    "title": "About EcoSort AI",
+    "subtitle": "Why we built this, and what makes it different.",
+    "mission": "Most waste ends up in the wrong bin for one simple reason: people don't always know which bin something belongs in. EcoSort AI removes that guesswork — point your camera at anything, and know instantly.",
+    "how_title": "How it works",
+    "step1_title": "Point",
+    "step1_text": "Show it anything through your camera or a photo — a bottle, a broken toy, a wrapper, whatever's actually in your hand.",
+    "step2_title": "Identify",
+    "step2_text": "AI recognises the object itself, not just a memorised checklist — so unusual or unfamiliar items still get identified.",
+    "step3_title": "Sort",
+    "step3_text": "Get the right bin instantly — spoken aloud in your language, with a disposal tip and eco-points for getting it right.",
+    "diff_title": "What makes it different",
+    "d1_title": "Recognises almost anything",
+    "d1_text": "Not limited to a small fixed list of trained objects — it can identify things it's never explicitly seen before.",
+    "d2_title": "Speaks your language",
+    "d2_text": "English, Hindi, Bengali, Tamil, Telugu or Marathi — the whole site and every result, not just a translated label.",
+    "d3_title": "Works anywhere",
+    "d3_text": "A real, permanent website — reachable from any phone or laptop, any time, with nothing to install.",
+    "privacy_title": "Your privacy, plainly",
+    "privacy_text": "Sign in to keep your eco-points and history saved across visits. Browsing as a guest? Nothing is saved — ever."
+  },
   "guidelines_content": {
     "biodegradable": {
       "short_name": "Biodegradable",

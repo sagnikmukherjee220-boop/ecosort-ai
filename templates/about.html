@@ -2,42 +2,58 @@
 {% block title %}About — EcoSort AI{% endblock %}
 {% block content %}
 
-<h2 class="section-title" style="text-align:left;margin-bottom:4px;">About This Project</h2>
-<p class="section-sub" style="text-align:left;margin:0 0 24px;">How EcoSort AI is built, and why it's designed this way.</p>
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;" data-i18n="about.title">About EcoSort AI</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;" data-i18n="about.subtitle">Why we built this, and what makes it different.</p>
 
-<div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">The Problem</h3>
-  <p style="color:var(--text-dim);line-height:1.7;">Improper waste segregation at source is one of the biggest obstacles to effective recycling and composting. Most households and institutions mix biodegradable, recyclable, e-waste and hazardous items into a single bin, making downstream sorting expensive, unsafe and often impossible. EcoSort AI demonstrates how computer vision can guide correct segregation at the point of disposal, in real time.</p>
+<div class="card about-hero">
+  <div class="about-hero-emoji">🌍</div>
+  <p data-i18n="about.mission">Most waste ends up in the wrong bin for one simple reason: people don't always know which bin something belongs in. EcoSort AI removes that guesswork — point your camera at anything, and know instantly.</p>
 </div>
 
-<div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">How It Works</h3>
-  <ol style="color:var(--text-dim);line-height:1.9;padding-left:20px;">
-    <li><strong style="color:var(--text)">Capture:</strong> The browser grabs frames from the webcam (or an uploaded photo) using the HTML5 Media/Canvas APIs — entirely client-side.</li>
-    <li><strong style="color:var(--text)">Identification:</strong> Each frame is sent to a vision-language AI model, which names every object it sees and assigns each one a waste category directly — not limited to a small fixed list of trainable classes, so it can recognise open-ended, real-world objects.</li>
-    <li><strong style="color:var(--text)">Category metadata:</strong> <code class="kbd">waste_map.py</code> owns what each of the five categories — Biodegradable, Recyclable, Non-Recyclable, E-Waste, Hazardous — actually means: bin name, color, disposal tip, points. The model only picks the category; the presentation stays consistent.</li>
-    <li><strong style="color:var(--text)">Guidance:</strong> The matched category's disposal tip is displayed on-screen and read aloud (in your chosen language), and the detection is logged to a database for the dashboard, streaks and eco-points.</li>
-  </ol>
-</div>
-
-<div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">Why an AI Model Instead of a Fixed Object List?</h3>
-  <p style="color:var(--text-dim);line-height:1.7;">Traditional lightweight object detectors only recognise a small predefined set of classes (commonly around 80 everyday objects), so anything outside that list is invisible to them. EcoSort AI instead uses a vision-language model that can identify and reason about arbitrary objects, giving genuinely open-ended recognition at the cost of needing an internet connection and an API call per detection, rather than running fully offline.</p>
-</div>
-
-<div class="card" style="margin-bottom:20px;">
-  <h3 style="margin-top:0;">Tech Stack</h3>
-  <div class="category-grid" style="margin-top:10px;">
-    <div class="cat-card"><h4>Backend</h4><p>Python, Flask, SQLite</p></div>
-    <div class="cat-card"><h4>AI</h4><p>Vision-language model via Hugging Face Inference Providers</p></div>
-    <div class="cat-card"><h4>Frontend</h4><p>HTML5, CSS3, vanilla JavaScript, Chart.js</p></div>
-    <div class="cat-card"><h4>Extras</h4><p>Web Speech API (voice, multilingual), EcoBot chat assistant</p></div>
+<h3 class="about-section-title" data-i18n="about.how_title">How it works</h3>
+<div class="feature-grid about-steps">
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#4caf5026;">📸</div>
+    <h3 data-i18n="about.step1_title">Point</h3>
+    <p data-i18n="about.step1_text">Show it anything through your camera or a photo — a bottle, a broken toy, a wrapper, whatever's actually in your hand.</p>
+  </div>
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#20c9e026;">🧠</div>
+    <h3 data-i18n="about.step2_title">Identify</h3>
+    <p data-i18n="about.step2_text">AI recognises the object itself, not just a memorised checklist — so unusual or unfamiliar items still get identified.</p>
+  </div>
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#ff980026;">♻️</div>
+    <h3 data-i18n="about.step3_title">Sort</h3>
+    <p data-i18n="about.step3_text">Get the right bin instantly — spoken aloud in your language, with a disposal tip and eco-points for getting it right.</p>
   </div>
 </div>
 
-<div class="card">
-  <h3 style="margin-top:0;">Deployment</h3>
-  <p style="color:var(--text-dim);line-height:1.7;">The app is deployed as a Docker container to Render, giving it a permanent public URL that works from any device without needing anyone's laptop to stay on. You can also run it locally with <code class="kbd">python app.py</code> for development.</p>
+<h3 class="about-section-title" data-i18n="about.diff_title">What makes it different</h3>
+<div class="feature-grid about-steps">
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#2196f326;">🔍</div>
+    <h3 data-i18n="about.d1_title">Recognises almost anything</h3>
+    <p data-i18n="about.d1_text">Not limited to a small fixed list of trained objects — it can identify things it's never explicitly seen before.</p>
+  </div>
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#e5393526;">🗣️</div>
+    <h3 data-i18n="about.d2_title">Speaks your language</h3>
+    <p data-i18n="about.d2_text">English, Hindi, Bengali, Tamil, Telugu or Marathi — the whole site and every result, not just a translated label.</p>
+  </div>
+  <div class="card">
+    <div class="cat-icon-badge" style="background:#38e07a26;">🌐</div>
+    <h3 data-i18n="about.d3_title">Works anywhere</h3>
+    <p data-i18n="about.d3_text">A real, permanent website — reachable from any phone or laptop, any time, with nothing to install.</p>
+  </div>
+</div>
+
+<div class="card about-privacy">
+  <div class="cat-icon-badge" style="background:#a9c4b626;">🔒</div>
+  <div>
+    <h3 style="margin:0 0 4px;" data-i18n="about.privacy_title">Your privacy, plainly</h3>
+    <p data-i18n="about.privacy_text">Sign in to keep your eco-points and history saved across visits. Browsing as a guest? Nothing is saved — ever.</p>
+  </div>
 </div>
 
 {% endblock %}

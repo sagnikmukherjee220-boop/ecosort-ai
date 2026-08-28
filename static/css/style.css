@@ -130,6 +130,16 @@ body{
 .feature-grid h3{margin:0 0 8px;font-size:1.08rem;}
 .feature-grid p{color:var(--text-dim);font-size:.92rem;line-height:1.55;margin:0;}
 
+/* ---------- ABOUT: mission hero, step cards, privacy strip ---------- */
+.about-hero{display:flex;align-items:center;gap:18px;margin-bottom:30px;}
+.about-hero-emoji{font-size:2.6rem;flex-shrink:0;}
+.about-hero p{color:var(--text-dim);font-size:1.05rem;line-height:1.65;margin:0;}
+.about-section-title{font-size:1.15rem;margin:0 0 14px;}
+.about-steps{margin-bottom:32px;}
+.about-steps .cat-icon-badge{margin-bottom:12px;}
+.about-privacy{display:flex;align-items:flex-start;gap:16px;}
+.about-privacy p{color:var(--text-dim);font-size:.92rem;line-height:1.55;margin:0;}
+
 /* category chips reused across pages */
 .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:20px;}
 .cat-card{border-radius:16px;padding:20px;border:1px solid var(--border);background:var(--surface);}
