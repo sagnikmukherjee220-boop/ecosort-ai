@@ -104,21 +104,32 @@ LANG_NAMES = {
 }
 
 
+MAX_IMAGE_DIM = 1280  # longest side, in pixels
+
+
 def decode_image(data_url_or_file):
     """Accept either a base64 data-URL (from webcam canvas) or an uploaded file.
-    Returns (PIL.Image, base64 data-URI string) — the model needs the data URI."""
+    Returns (PIL.Image, base64 data-URI string) — the model needs the data URI.
+
+    Always downscales to MAX_IMAGE_DIM on the longest side and re-encodes at
+    quality 92 (server-side safety net — the client downscales too, but a
+    direct API caller or a browser that skips the client-side resize would
+    otherwise still ship a multi-megabyte phone photo). This cuts upload and
+    inference latency on large/complex images without materially hurting
+    accuracy, since hosted vision models cap their effective input
+    resolution similarly anyway."""
     if hasattr(data_url_or_file, "read"):
         img = Image.open(data_url_or_file.stream).convert("RGB")
-        buf = io.BytesIO()
-        # Quality 92 (PIL's default ~75 was blurring fine detail like small
-        # text/logos on packaging, contributing to misidentifications).
-        img.save(buf, format="JPEG", quality=92)
-        data_uri = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
     else:
         header, encoded = data_url_or_file.split(",", 1)
         img_bytes = base64.b64decode(encoded)
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        data_uri = data_url_or_file
+
+    img.thumbnail((MAX_IMAGE_DIM, MAX_IMAGE_DIM), Image.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=92)
+    data_uri = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
     return img, data_uri
 
 

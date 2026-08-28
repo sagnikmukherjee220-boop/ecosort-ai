@@ -161,14 +161,28 @@
 
   retakeBtn.addEventListener("click", resumeLive);
 
-  function grabFrame(source) {
+  // Cap the longest side before ever sending an image anywhere — phone
+  // photos in particular can be 3000-4000px+, which needlessly slows both
+  // the upload and the model's own processing on a busy multi-object shot.
+  // 1280px is comfortably above what hosted vision models use internally
+  // anyway, so this doesn't cost accuracy.
+  const MAX_IMAGE_DIM = 1280;
+
+  function drawScaled(source, srcW, srcH) {
+    const scale = Math.min(1, MAX_IMAGE_DIM / Math.max(srcW, srcH));
     const c = document.createElement("canvas");
-    c.width = source.videoWidth || source.naturalWidth;
-    c.height = source.videoHeight || source.naturalHeight;
+    c.width = Math.round(srcW * scale);
+    c.height = Math.round(srcH * scale);
     c.getContext("2d").drawImage(source, 0, 0, c.width, c.height);
-    // 0.92 (was 0.7) — the extra compression was blurring fine detail like
-    // small text/logos on packaging, contributing to misidentifications.
+    // Quality 0.92 (was 0.7) — the extra compression was blurring fine
+    // detail like small text/logos on packaging, contributing to
+    // misidentifications; the size cap above is what actually keeps
+    // payload/latency down, so this can stay high without a tradeoff.
     return c.toDataURL("image/jpeg", 0.92);
+  }
+
+  function grabFrame(source) {
+    return drawScaled(source, source.videoWidth || source.naturalWidth, source.videoHeight || source.naturalHeight);
   }
 
   // ---------------- Upload ----------------
@@ -177,14 +191,17 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      uploadedDataUrl = e.target.result;
-      uploadPreview.src = uploadedDataUrl;
-      analyzeBtn.disabled = false;
-      uploadPreview.onload = () => {
-        overlay.width = uploadPreview.naturalWidth;
-        overlay.height = uploadPreview.naturalHeight;
+      const img = new Image();
+      img.onload = () => {
+        uploadedDataUrl = drawScaled(img, img.naturalWidth, img.naturalHeight);
+        uploadPreview.src = uploadedDataUrl;
+        analyzeBtn.disabled = false;
+        const scale = Math.min(1, MAX_IMAGE_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+        overlay.width = Math.round(img.naturalWidth * scale);
+        overlay.height = Math.round(img.naturalHeight * scale);
         ctx.clearRect(0, 0, overlay.width, overlay.height);
       };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   });
@@ -211,6 +228,11 @@
     const wasDisabled = loadingBtn.disabled;
     loadingBtn.disabled = true;
     loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
+    // Visibly disable the sensitivity buttons too — otherwise a click while
+    // a request is already in flight silently does nothing, which reads as
+    // broken rather than "already working on it".
+    const sensBtns = sensitivityBtns.querySelectorAll("button");
+    sensBtns.forEach((b) => (b.disabled = true));
     try {
       const data = await sendForDetection(dataUrl, source);
       renderDetections(data.detections, overlay.width, overlay.height);
@@ -220,6 +242,7 @@
     busy = false;
     loadingBtn.disabled = wasDisabled;
     loadingBtn.textContent = idleText;
+    sensBtns.forEach((b) => (b.disabled = false));
     // Guard against the camera having been stopped while this request was
     // in flight — don't let a stale response re-enable a dead capture button.
     if (source === "webcam" && !stream) loadingBtn.disabled = true;
