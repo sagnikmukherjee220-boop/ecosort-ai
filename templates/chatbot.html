@@ -2,25 +2,25 @@
 {% block title %}EcoBot — EcoSort AI{% endblock %}
 {% block content %}
 
-<h2 class="section-title" style="text-align:left;margin-bottom:4px;">EcoBot</h2>
-<p class="section-sub" style="text-align:left;margin:0 0 24px;">An AI assistant for waste-disposal and sustainability questions — remembers what you've asked earlier in this chat.</p>
+<h2 class="section-title" style="text-align:left;margin-bottom:4px;" data-i18n="chatbot.title">EcoBot</h2>
+<p class="section-sub" style="text-align:left;margin:0 0 24px;" data-i18n="chatbot.subtitle">An AI assistant for waste-disposal and sustainability questions — remembers what you've asked earlier in this chat.</p>
 
 <div class="card chat-shell">
   <div class="chat-header-row">
-    <button class="btn btn-ghost btn-sm" id="newChatBtn">🔄 New chat</button>
+    <button class="btn btn-ghost btn-sm" id="newChatBtn" data-i18n="chatbot.new_chat">🔄 New chat</button>
   </div>
   <div class="chat-window" id="chatWindow">
-    <div class="msg bot">Hi! I'm EcoBot 🤖. Ask me about any waste category, or how the detection system works.</div>
+    <div class="msg bot" data-i18n="chatbot.greeting">Hi! I'm EcoBot 🤖. Ask me about any waste category, or how the detection system works.</div>
   </div>
   <div class="quick-chips">
-    <span class="chip" data-q="How do I dispose of e-waste?">How do I dispose of e-waste?</span>
-    <span class="chip" data-q="What goes in the green bin?">What goes in the green bin?</span>
-    <span class="chip" data-q="How does the detection model work?">How does the model work?</span>
-    <span class="chip" data-q="How do eco points work?">How do eco-points work?</span>
+    <span class="chip" data-i18n="chatbot.chip_ewaste">How do I dispose of e-waste?</span>
+    <span class="chip" data-i18n="chatbot.chip_greenbin">What goes in the green bin?</span>
+    <span class="chip" data-i18n="chatbot.chip_howworks">How does the model work?</span>
+    <span class="chip" data-i18n="chatbot.chip_points">How do eco-points work?</span>
   </div>
   <div class="chat-input-row">
-    <input type="text" id="chatInput" placeholder="Ask EcoBot something...">
-    <button class="btn btn-primary" id="sendBtn">Send</button>
+    <input type="text" id="chatInput" data-i18n-placeholder="chatbot.input_placeholder" placeholder="Ask EcoBot something...">
+    <button class="btn btn-primary" id="sendBtn" data-i18n="chatbot.send">Send</button>
   </div>
 </div>
 

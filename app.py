@@ -356,7 +356,8 @@ def api_clear_history():
 def api_chatbot():
     payload = request.get_json(silent=True) or {}
     history = payload.get("history") or []
-    return jsonify(get_response(history))
+    lang = payload.get("lang", "en")
+    return jsonify(get_response(history, lang))
 
 
 @app.route("/api/categories")

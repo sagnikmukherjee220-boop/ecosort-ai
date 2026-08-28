@@ -6,13 +6,30 @@
     e_waste: "#ff9800",
     hazardous: "#e53935",
   };
-  const CATEGORY_LABELS = {
+  const CATEGORY_LABELS_FALLBACK = {
     biodegradable: "Biodegradable",
     recyclable: "Recyclable",
     non_recyclable: "Non-Recyclable",
     e_waste: "E-Waste",
     hazardous: "Hazardous",
   };
+  function categoryLabel(key) {
+    const fallback = CATEGORY_LABELS_FALLBACK[key] || key;
+    return window.I18N ? window.I18N.t(`categories.${key}.label`, fallback) : fallback;
+  }
+
+  const BADGE_KEYS = {
+    "Rookie Sorter": "badge_rookie",
+    "Bronze Segregator": "badge_bronze",
+    "Silver Segregator": "badge_silver",
+    "Gold Segregator": "badge_gold",
+    "Platinum Segregator": "badge_platinum",
+  };
+  function badgeLabel(name) {
+    const key = BADGE_KEYS[name];
+    if (!key || !window.I18N) return name;
+    return window.I18N.t(`dashboard.${key}`, name);
+  }
 
   let chart = null;
 
@@ -23,9 +40,9 @@
     document.getElementById("totalPoints").textContent = stats.total_points;
     document.getElementById("totalItems").textContent = stats.total_items;
     document.getElementById("streak").textContent = stats.streak;
-    document.getElementById("badgeName").textContent = stats.badge;
+    document.getElementById("badgeName").textContent = badgeLabel(stats.badge);
 
-    const labels = Object.keys(stats.by_category).map((k) => CATEGORY_LABELS[k] || k);
+    const labels = Object.keys(stats.by_category).map(categoryLabel);
     const values = Object.values(stats.by_category);
     const colors = Object.keys(stats.by_category).map((k) => CATEGORY_COLORS[k] || "#888");
 
@@ -33,9 +50,10 @@
     if (chart) chart.destroy();
 
     if (values.length === 0) {
+      const emptyText = window.I18N ? window.I18N.t("dashboard.no_detections", "No detections yet — try the Detect page!") : "No detections yet — try the Detect page!";
       ctx.getContext("2d").font = "16px Segoe UI";
       ctx.getContext("2d").fillStyle = "#a9c4b6";
-      ctx.getContext("2d").fillText("No detections yet — try the Detect page!", 10, 100);
+      ctx.getContext("2d").fillText(emptyText, 10, 100);
     } else {
       chart = new Chart(ctx, {
         type: "doughnut",
@@ -56,16 +74,21 @@
     stats.recent.forEach((r) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${r.ts.replace("T", " ")}</td><td style="text-transform:capitalize;">${r.coco_label}</td>
-        <td>${CATEGORY_LABELS[r.category] || r.category}</td><td>${Math.round(r.confidence * 100)}%</td><td>+${r.points}</td>`;
+        <td>${categoryLabel(r.category)}</td><td>${Math.round(r.confidence * 100)}%</td><td>+${r.points}</td>`;
       tbody.appendChild(tr);
     });
   }
 
   document.getElementById("clearBtn").addEventListener("click", async () => {
-    if (!confirm("Reset all local detection history? This cannot be undone.")) return;
+    const msg = window.I18N ? window.I18N.t("dashboard.reset_confirm", "Reset all detection history? This cannot be undone.") : "Reset all detection history? This cannot be undone.";
+    if (!confirm(msg)) return;
     await fetch("/api/clear_history", { method: "POST" });
     loadStats();
   });
+
+  // Re-render the chart/table labels when the language changes, so a
+  // switch updates the whole dashboard, not just the static nav/labels.
+  document.addEventListener("i18n:change", loadStats);
 
   loadStats();
 })();

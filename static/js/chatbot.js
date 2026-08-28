@@ -56,10 +56,11 @@
     input.value = "";
     history.push({ role: "user", content: text });
     saveHistory();
+    const lang = window.I18N ? window.I18N.lang : "en";
     const res = await fetch("/api/chatbot", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ history }),
+      body: JSON.stringify({ history, lang }),
     });
     const data = await res.json();
     history.push({ role: "assistant", content: data.reply });
@@ -71,13 +72,17 @@
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") send(input.value);
   });
+  // Send whatever the chip currently displays (already translated by
+  // i18n.js), not a fixed English data-q — otherwise clicking a chip while
+  // browsing in Hindi would still send an English question.
   document.querySelectorAll(".chip").forEach((chip) => {
-    chip.addEventListener("click", () => send(chip.dataset.q));
+    chip.addEventListener("click", () => send(chip.textContent.trim()));
   });
 
   newChatBtn.addEventListener("click", () => {
     history = [];
     saveHistory();
-    chatWindow.innerHTML = `<div class="msg bot">${GREETING}</div>`;
+    const greeting = window.I18N ? window.I18N.t("chatbot.greeting", GREETING) : GREETING;
+    chatWindow.innerHTML = `<div class="msg bot">${greeting}</div>`;
   });
 })();

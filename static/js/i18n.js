@@ -35,6 +35,17 @@ window.I18N = (() => {
       const val = t(el.getAttribute("data-i18n-title"));
       if (val !== undefined) el.setAttribute("title", val);
     });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      const val = t(el.getAttribute("data-i18n-placeholder"));
+      if (val !== undefined) el.setAttribute("placeholder", val);
+    });
+    // For strings that need inline markup preserved (e.g. a styled <span>
+    // around one emphasized word) — the translation itself contains the
+    // tag, so each language can wrap whichever word fits its own grammar.
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const val = t(el.getAttribute("data-i18n-html"));
+      if (val !== undefined) el.innerHTML = val;
+    });
     document.documentElement.lang = lang;
     document.querySelectorAll(".lang-select").forEach((sel) => (sel.value = lang));
   }

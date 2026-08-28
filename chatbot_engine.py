@@ -33,6 +33,11 @@ _hf_client = None
 CHAT_MODEL = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 CHAT_PROVIDER = "deepinfra"
 
+LANG_NAMES = {
+    "en": "English", "hi": "Hindi", "bn": "Bengali",
+    "ta": "Tamil", "te": "Telugu", "mr": "Marathi",
+}
+
 
 def _get_hf_client():
     global _hf_client
@@ -45,9 +50,10 @@ def _get_hf_client():
     return _hf_client
 
 
-def _build_system_prompt():
+def _build_system_prompt(lang: str = "en"):
     facts = "\n".join(f"- {e['response']}" for e in _KB if e["id"] not in ("greeting", "thanks"))
     bins = ", ".join(f"{meta['label']} ({meta['bin']})" for meta in waste_map.CATEGORY_META.values())
+    lang_name = LANG_NAMES.get(lang, "English")
     return (
         "You are EcoBot, a friendly assistant on the EcoSort AI waste-segregation website. "
         "Answer clearly, warmly, and concisely (2-4 short sentences, no long essays or "
@@ -60,14 +66,16 @@ def _build_system_prompt():
         "living, not just the five categories above. You can have a normal back-and-forth "
         "conversation, including remembering what was said earlier in this chat. If asked "
         "something with no connection to waste, sustainability, or the site at all, answer "
-        "briefly if you genuinely know it, otherwise say so honestly rather than guessing."
+        "briefly if you genuinely know it, otherwise say so honestly rather than guessing.\n"
+        f"The user has set the site's language to {lang_name} — always reply in {lang_name}, "
+        "regardless of which language they type their message in."
     )
 
 
 MAX_HISTORY_MESSAGES = 12  # ~6 exchanges of context, enough to feel conversational without ballooning cost
 
 
-def _ai_response(history: list) -> str:
+def _ai_response(history: list, lang: str = "en") -> str:
     client = _get_hf_client()
     # `history` comes from the client (untrusted) — only pass through
     # well-formed user/assistant turns so it can't inject a fake system
@@ -80,7 +88,7 @@ def _ai_response(history: list) -> str:
 
     response = client.chat.completions.create(
         model=CHAT_MODEL,
-        messages=[{"role": "system", "content": _build_system_prompt()}] + safe_history,
+        messages=[{"role": "system", "content": _build_system_prompt(lang)}] + safe_history,
         max_tokens=250,
     )
     return response.choices[0].message.content.strip()
@@ -117,14 +125,17 @@ def _rule_based_response(user_message: str) -> str:
     return FALLBACK_RESPONSES[0]
 
 
-def get_response(history: list) -> dict:
+def get_response(history: list, lang: str = "en") -> dict:
     """`history` is a list of {"role": "user"|"assistant", "content": str}
-    messages in order, ending with the latest user turn."""
+    messages in order, ending with the latest user turn. `lang` is the
+    site's currently selected UI language code (e.g. "hi") — the AI path
+    replies in it explicitly; the rule-based fallback stays English-only
+    (its canned responses aren't translated, unlike everything else)."""
     user_turns = [m for m in history if isinstance(m, dict) and m.get("role") == "user"]
     last_message = str(user_turns[-1].get("content", "")) if user_turns else ""
     if not last_message.strip():
         return {"reply": "Ask me anything about waste segregation!"}
     try:
-        return {"reply": _ai_response(history)}
+        return {"reply": _ai_response(history, lang)}
     except Exception:
         return {"reply": _rule_based_response(last_message)}

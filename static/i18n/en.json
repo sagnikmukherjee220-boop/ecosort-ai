@@ -54,10 +54,154 @@
     "s5_title": "Welcome to EcoSort AI",
     "s5_text": "Sign in to save your progress, or jump straight in as a guest."
   },
+  "home": {
+    "eyebrow": "♻ Computer Vision",
+    "hero_title": "Segregate waste <span>instantly</span> with AI, not guesswork.",
+    "hero_sub": "EcoSort AI uses an AI vision model to identify what you're holding up to the camera — almost anything, not just a fixed list — and tells you exactly which bin it belongs in: biodegradable, recyclable, non-recyclable, e-waste or hazardous.",
+    "try_detection": "Try Live Detection",
+    "view_guidelines": "View Guidelines",
+    "stat_categories": "Waste Categories",
+    "stat_languages": "Languages Supported",
+    "stat_any_num": "Any",
+    "stat_any_label": "Object It Can Recognise",
+    "stat_live_num": "Live",
+    "stat_live_label": "Webcam & Photo Detection",
+    "features_title": "Everything you need to see",
+    "features_sub": "Multi-object detection, classification logic, real disposal guidelines, and a bit of extra polish.",
+    "f1_title": "Open-Vocabulary Object Detection",
+    "f1_text": "An AI vision model scans your webcam capture or uploaded photo and identifies every waste item it can find — not limited to a small predefined list.",
+    "f2_title": "5-Way Waste Classification",
+    "f2_text": "Every detected item is sorted into Biodegradable, Recyclable, Non-Recyclable, E-Waste or Hazardous, with clear disposal guidance.",
+    "f3_title": "Voice-Guided Disposal",
+    "f3_text": "Built-in text-to-speech reads out disposal instructions the moment an item is identified — hands-free, and available in multiple Indian languages.",
+    "f4_title": "Eco-Points Dashboard",
+    "f4_text": "Every correctly segregated item earns points, streaks and badges — gamifying good waste-disposal habits.",
+    "f5_title": "EcoBot Assistant",
+    "f5_text": "An AI chatbot that remembers your conversation and answers waste-disposal and sustainability questions in your language.",
+    "f6_title": "Always-On & Reachable",
+    "f6_text": "Deployed as a live website — works from any phone or laptop, anywhere, any time, with no setup needed.",
+    "cta_title": "Ready to sort some waste?",
+    "cta_text": "Point your webcam at a bottle, a banana peel, or an old phone and watch EcoSort AI classify it in real time.",
+    "cta_button": "Launch Detector"
+  },
+  "chatbot": {
+    "title": "EcoBot",
+    "subtitle": "An AI assistant for waste-disposal and sustainability questions — remembers what you've asked earlier in this chat.",
+    "new_chat": "🔄 New chat",
+    "greeting": "Hi! I'm EcoBot 🤖. Ask me about any waste category, or how the detection system works.",
+    "chip_ewaste": "How do I dispose of e-waste?",
+    "chip_greenbin": "What goes in the green bin?",
+    "chip_howworks": "How does the model work?",
+    "chip_points": "How do eco-points work?",
+    "input_placeholder": "Ask EcoBot something...",
+    "send": "Send"
+  },
+  "dashboard": {
+    "title": "Your Impact Dashboard",
+    "subtitle": "Signed-in accounts keep their eco-points and history saved across visits; browsing as a guest keeps nothing.",
+    "guest_banner": "You're browsing as a guest — nothing you scan today is being saved.",
+    "guest_signin": "Sign in with Google",
+    "guest_banner2": "to keep your eco-points, streaks and history across visits.",
+    "current_badge": "Current Badge",
+    "eco_points": "Eco-Points",
+    "items_segregated": "Items Segregated",
+    "day_streak": "Day Streak 🔥",
+    "breakdown": "Breakdown by Category",
+    "actions": "Actions",
+    "actions_sub": "Generate a shareable impact certificate, or reset your history.",
+    "view_certificate": "View Impact Certificate",
+    "reset_history": "Reset History",
+    "reset_confirm": "Reset all detection history? This cannot be undone.",
+    "recent": "Recent Detections",
+    "th_time": "Time",
+    "th_item": "Item",
+    "th_category": "Category",
+    "th_confidence": "Confidence",
+    "th_points": "Points",
+    "no_detections": "No detections yet — try the Detect page!",
+    "badge_rookie": "Rookie Sorter",
+    "badge_bronze": "Bronze Segregator",
+    "badge_silver": "Silver Segregator",
+    "badge_gold": "Gold Segregator",
+    "badge_platinum": "Platinum Segregator"
+  },
   "guidelines": {
+    "title": "Segregation Guidelines",
+    "subtitle": "Tap a card to see the full how-to. The colours match the bins the app tells you to use.",
     "points_intro": "Points you earn per item, by category:",
     "show_details": "Show disposal steps ▾",
     "hide_details": "Hide disposal steps ▴"
+  },
+  "guidelines_content": {
+    "biodegradable": {
+      "short_name": "Biodegradable",
+      "title": "Biodegradable Waste",
+      "bin": "Green Bin",
+      "summary": "Organic matter that decomposes naturally through biological processes.",
+      "examples": ["Fruit & vegetable peels", "Leftover food", "Tea leaves & coffee grounds", "Garden/yard waste", "Paper napkins (soiled)", "Eggshells"],
+      "guidelines": [
+        "Collect in a separate green/organic bin, ideally lined with a compostable or paper bag — not plastic.",
+        "Keep it dry-ish; excess liquid speeds up foul odour and pest attraction.",
+        "Where possible, compost at home or through a municipal composting scheme — it turns into nutrient-rich manure in 30–60 days.",
+        "Never mix with plastic, glass or e-waste — even a small amount of contamination ruins an entire compost batch.",
+        "Dispose of daily in warm climates to avoid odour and pests."
+      ]
+    },
+    "recyclable": {
+      "short_name": "Recyclable",
+      "title": "Recyclable (Dry) Waste",
+      "bin": "Blue Bin",
+      "summary": "Clean, dry materials — paper, plastic, glass, metal — that can be reprocessed into new products.",
+      "examples": ["Plastic bottles", "Glass jars/bottles", "Metal cans", "Cardboard & newspaper", "Books & paper"],
+      "guidelines": [
+        "Rinse containers to remove food residue before disposal — contamination is the #1 reason recyclables end up in landfill.",
+        "Flatten cardboard boxes and plastic bottles to save space and ease transport.",
+        "Separate by material where your local facility requires it (paper / plastic / glass / metal).",
+        "Remove caps and labels if your recycler asks for it (varies by locality).",
+        "Never recycle broken glass loose — wrap it and mark it to protect handlers."
+      ]
+    },
+    "non_recyclable": {
+      "short_name": "Non-Recyclable",
+      "title": "Non-Recyclable (Reject) Waste",
+      "bin": "Black Bin",
+      "summary": "Mixed-material, soiled, or low-value items that current recycling streams cannot process.",
+      "examples": ["Multi-layer plastic wrappers", "Soiled tissues", "Broken ceramics", "Cigarette butts", "Thermocol/styrofoam pieces"],
+      "guidelines": [
+        "Minimise generation at source — avoid single-use, multi-layered packaging where possible.",
+        "Store separately from recyclables and biodegradables so it doesn't contaminate them.",
+        "Dispose of through your municipal solid-waste collection; it typically goes to a landfill or waste-to-energy facility.",
+        "Never burn this waste — burning plastics/thermocol releases toxic dioxins and furans."
+      ]
+    },
+    "e_waste": {
+      "short_name": "E-Waste",
+      "title": "E-Waste",
+      "bin": "Authorised E-Waste Collection Point",
+      "summary": "Discarded electrical/electronic devices and accessories — contains valuable recoverable metals as well as toxic substances.",
+      "examples": ["Mobile phones", "Laptops & keyboards", "TVs & monitors", "Chargers & cables", "Batteries", "Home appliances"],
+      "guidelines": [
+        "NEVER put e-waste in regular household bins — it contains lead, mercury, cadmium and other toxins that leach into soil and groundwater.",
+        "Wipe/factory-reset devices to protect your personal data before handing them over.",
+        "Hand over to an authorised e-waste recycler or a manufacturer take-back/collection programme.",
+        "Many electronics retailers and municipal bodies run periodic e-waste collection drives — look these up locally.",
+        "Batteries should ideally be dropped at dedicated battery-collection boxes, not thrown with other e-waste."
+      ]
+    },
+    "hazardous": {
+      "short_name": "Hazardous",
+      "title": "Hazardous Waste",
+      "bin": "Hazardous Waste Facility",
+      "summary": "Chemically reactive, corrosive, toxic, flammable or infectious waste requiring specialised handling.",
+      "examples": ["Paints & solvents", "Pesticides", "Expired medicines", "Used batteries", "Fluorescent/CFL bulbs", "Syringes/medical waste"],
+      "guidelines": [
+        "Never pour down the drain or mix with regular waste — it can contaminate water supplies and injure sanitation workers.",
+        "Store in original, labelled, sealed containers away from children and heat sources.",
+        "Return expired medicines to a pharmacy take-back scheme where available.",
+        "Hand fluorescent bulbs and batteries to specialised collection points — they contain mercury/heavy metals.",
+        "Contact your local municipal body for scheduled hazardous-waste pickup or drop-off events."
+      ]
+    }
   },
   "categories": {
     "biodegradable": { "label": "Biodegradable", "bin": "Green Bin", "tip": "Compostable organic waste. Breaks down naturally." },
