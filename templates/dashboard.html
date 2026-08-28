@@ -5,6 +5,12 @@
 <h2 class="section-title" style="text-align:left;margin-bottom:4px;">Your Impact Dashboard</h2>
 <p class="section-sub" style="text-align:left;margin:0 0 24px;">Every detection you make is logged locally on this machine — nothing leaves your computer.</p>
 
+{% if not current_user %}
+<div class="card guest-banner">
+  🔒 You're browsing as a guest — nothing you scan today is being saved. <a href="{{ url_for('auth_login_google') }}">Sign in with Google</a> to keep your eco-points, streaks and history across visits.
+</div>
+{% endif %}
+
 <div class="dash-grid" id="dashGrid">
   <div class="card badge-card">
     <div class="badge-icon">🏅</div>

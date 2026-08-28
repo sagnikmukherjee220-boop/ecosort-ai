@@ -2,6 +2,12 @@
 {% block title %}Impact Certificate — EcoSort AI{% endblock %}
 {% block content %}
 
+{% if not current_user %}
+<div class="card guest-banner no-print">
+  🔒 You're browsing as a guest, so there's no saved history to show yet. <a href="{{ url_for('auth_login_google') }}">Sign in with Google</a> and start scanning to earn a real certificate.
+</div>
+{% endif %}
+
 <div class="certificate">
   <div style="font-size:2.4rem;">♻️</div>
   <h1>Certificate of Eco Impact</h1>

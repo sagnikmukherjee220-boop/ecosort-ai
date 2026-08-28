@@ -259,8 +259,16 @@ def about_page():
 
 @app.route("/certificate")
 def certificate_page():
-    stats = db.get_stats()
+    stats = db.get_stats(current_user_id())
     return render_template("certificate.html", stats=stats)
+
+
+def current_user_id():
+    """The signed-in user's DB id, or None for a guest. Detections/points
+    are only ever saved against a real id — guests never get anything
+    written, so nothing about their visit is saved anywhere."""
+    user = session.get("user")
+    return user.get("id") if user else None
 
 
 # ------------------------------- AUTH ------------------------------------
@@ -280,8 +288,8 @@ def auth_callback():
     name = userinfo.get("name") or email or "there"
     picture = userinfo.get("picture")
     if google_sub:
-        db.upsert_user(google_sub, email, name, picture)
-        session["user"] = {"name": name, "email": email, "picture": picture}
+        user_id = db.upsert_user(google_sub, email, name, picture)
+        session["user"] = {"id": user_id, "name": name, "email": email, "picture": picture}
     return redirect(url_for("home"))
 
 
@@ -316,10 +324,15 @@ def api_detect():
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 500
 
-    # log every real (non-ignored) waste detection for the dashboard/gamification
-    for d in detections:
-        if d["category"] != "ignore":
-            db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source)
+    # Log every real (non-ignored) waste detection for the dashboard/
+    # gamification — but only for signed-in users. Guests get their results
+    # shown on screen same as anyone else, just never written anywhere, so
+    # a guest visit leaves no trace and starts fresh again next time.
+    user_id = current_user_id()
+    if user_id:
+        for d in detections:
+            if d["category"] != "ignore":
+                db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source, user_id)
 
     return jsonify({
         "detections": detections,
@@ -330,12 +343,12 @@ def api_detect():
 
 @app.route("/api/stats")
 def api_stats():
-    return jsonify(db.get_stats())
+    return jsonify(db.get_stats(current_user_id()))
 
 
 @app.route("/api/clear_history", methods=["POST"])
 def api_clear_history():
-    db.clear_history()
+    db.clear_history(current_user_id())
     return jsonify({"ok": True})
 
 

@@ -1,7 +1,11 @@
 """
 db.py — tiny SQLite layer (no ORM needed) for detection history,
-eco-points, streaks and badges. Zero external services, fully local,
-so it works offline and is 100% under the student's control.
+eco-points, streaks and badges.
+
+Detections are scoped per signed-in user (user_id) — guests never get a
+row written for them at all, so nothing about a guest's activity is
+saved anywhere; every guest visit genuinely starts from zero. Only
+Google-account holders accumulate persistent history/points.
 """
 import sqlite3
 import datetime
@@ -28,7 +32,8 @@ def init_db():
             category TEXT NOT NULL,
             confidence REAL NOT NULL,
             points INTEGER NOT NULL,
-            source TEXT NOT NULL
+            source TEXT NOT NULL,
+            user_id INTEGER
         )
         """
     )
@@ -44,14 +49,21 @@ def init_db():
         )
         """
     )
+    # Lightweight migration for a pre-existing local instance/waste.db that
+    # predates the user_id column — safe to ignore if it's already there
+    # (fresh deploys on Render never hit this since storage is ephemeral).
+    try:
+        conn.execute("ALTER TABLE detections ADD COLUMN user_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
 
 def upsert_user(google_sub, email, name, picture):
     """Insert a user on first Google sign-in, or refresh their profile/last_login
-    on every subsequent one. Eco-points/history stay shared/global (unchanged) —
-    this table exists only to remember who's signed in, for the navbar greeting."""
+    on every subsequent one. Returns their internal user id, which is what
+    detections/points/history get scoped to."""
     conn = get_conn()
     conn.execute(
         """
@@ -63,24 +75,44 @@ def upsert_user(google_sub, email, name, picture):
         (google_sub, email, name, picture, datetime.datetime.now().isoformat(timespec="seconds")),
     )
     conn.commit()
+    row = conn.execute("SELECT id FROM users WHERE google_sub = ?", (google_sub,)).fetchone()
     conn.close()
+    return row["id"] if row else None
 
 
-def log_detection(coco_label, category, confidence, points, source="webcam"):
+def log_detection(coco_label, category, confidence, points, source="webcam", user_id=None):
     conn = get_conn()
     conn.execute(
-        "INSERT INTO detections (ts, coco_label, category, confidence, points, source) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO detections (ts, coco_label, category, confidence, points, source, user_id) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
         (datetime.datetime.now().isoformat(timespec="seconds"), coco_label, category,
-         confidence, points, source),
+         confidence, points, source, user_id),
     )
     conn.commit()
     conn.close()
 
 
-def get_stats():
+def _empty_stats():
+    return {
+        "total_points": 0,
+        "total_items": 0,
+        "by_category": {},
+        "streak": 0,
+        "badge": "Rookie Sorter",
+        "recent": [],
+    }
+
+
+def get_stats(user_id=None):
+    """Stats for one signed-in user's own history. Guests (user_id=None)
+    always get an empty result — nothing is tracked for them server-side."""
+    if user_id is None:
+        return _empty_stats()
+
     conn = get_conn()
-    rows = conn.execute("SELECT * FROM detections ORDER BY ts DESC").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM detections WHERE user_id = ? ORDER BY ts DESC", (user_id,)
+    ).fetchall()
     conn.close()
 
     total_points = sum(r["points"] for r in rows)
@@ -130,8 +162,14 @@ def get_stats():
     }
 
 
-def clear_history():
+def clear_history(user_id=None):
+    """Clears only the given user's own history. A guest (user_id=None) has
+    nothing tracked server-side to clear, so this is a no-op for them —
+    importantly, it never wipes other users' data (the old version deleted
+    *everything*, regardless of who clicked Reset)."""
+    if user_id is None:
+        return
     conn = get_conn()
-    conn.execute("DELETE FROM detections")
+    conn.execute("DELETE FROM detections WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
