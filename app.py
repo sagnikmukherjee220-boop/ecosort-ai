@@ -245,6 +245,10 @@ def guidelines_page():
     path = os.path.join(os.path.dirname(__file__), "data", "guidelines.json")
     with open(path, encoding="utf-8") as f:
         guidelines = json.load(f)
+    # points come from waste_map (the single source of truth the app itself
+    # actually awards from), not duplicated into guidelines.json
+    for g in guidelines:
+        g["points"] = waste_map.CATEGORY_META.get(g["key"], {}).get("points", 0)
     return render_template("guidelines.html", guidelines=guidelines)
 
 

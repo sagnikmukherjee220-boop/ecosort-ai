@@ -139,6 +139,26 @@ body{
 .cat-card ul{margin:8px 0 0;padding-left:18px;color:var(--text-dim);font-size:.85rem;line-height:1.6;}
 .pill{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.1);}
 
+/* ---------- GUIDELINES: points strip + visual, tap-to-expand cards ---------- */
+.points-strip{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:22px;display:flex;flex-direction:column;gap:12px;}
+.points-strip-label{color:var(--text-dim);font-size:.88rem;font-weight:600;}
+.points-chips{display:flex;flex-wrap:wrap;gap:10px;}
+.points-chip{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid;}
+.points-chip b{font-weight:800;}
+
+.cat-card-visual{border-width:1px;border-style:solid;}
+.cat-card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:4px;}
+.cat-icon-badge{font-size:1.6rem;width:52px;height:52px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+.cat-card-top > div{flex:1;}
+.points-badge{flex-shrink:0;color:#04140b;font-weight:800;font-size:.78rem;padding:6px 11px;border-radius:999px;white-space:nowrap;}
+
+.cat-examples{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 14px;}
+.cat-examples .chip{cursor:default;padding:5px 12px;font-size:.76rem;background:var(--bg2);}
+
+.cat-toggle{background:none;border:none;color:var(--accent);font-weight:700;font-size:.85rem;cursor:pointer;padding:0;}
+.cat-details{max-height:0;overflow:hidden;opacity:0;margin:0;padding-left:18px;transition:max-height .3s ease, opacity .3s ease, margin-top .3s ease;}
+.cat-card.cat-open .cat-details{max-height:600px;opacity:1;margin-top:12px;}
+
 /* ---------- DETECT PAGE ---------- */
 .detect-layout{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:start;}
 @media (max-width:900px){.detect-layout{grid-template-columns:1fr;}}

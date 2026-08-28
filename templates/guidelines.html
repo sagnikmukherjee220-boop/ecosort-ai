@@ -3,18 +3,43 @@
 {% block content %}
 
 <h2 class="section-title" style="text-align:left;margin-bottom:4px;">Segregation Guidelines</h2>
-<p class="section-sub" style="text-align:left;margin:0 0 24px;">Detailed, category-wise disposal guidance — the same knowledge base the detector and EcoBot draw from.</p>
+<p class="section-sub" style="text-align:left;margin:0 0 20px;">Tap a card to see the full how-to. The colours match the bins the app tells you to use.</p>
+
+{% set icon_map = {"leaf": "🍃", "recycle": "♻️", "trash": "🗑️", "cpu": "💻", "hazard": "⚠️"} %}
+
+<div class="points-strip">
+  <span class="points-strip-label" data-i18n="guidelines.points_intro">Points you earn per item, by category:</span>
+  <div class="points-chips">
+    {% for g in guidelines %}
+    <span class="points-chip" style="background:{{ g.color }}22;color:{{ g.color }};border-color:{{ g.color }}55;">
+      {{ icon_map.get(g.icon, "♻️") }} {{ g.title.split(' ')[0] }} <b>+{{ g.points }}</b>
+    </span>
+    {% endfor %}
+  </div>
+</div>
 
 <div class="category-grid">
   {% for g in guidelines %}
-  <div class="cat-card">
-    <span class="dot" style="background:{{ g.color }}"></span><span class="pill" style="background:{{ g.color }}22;color:{{ g.color }};">{{ g.bin }}</span>
-    <h4>{{ g.title }}</h4>
+  <div class="cat-card cat-card-visual" style="background:linear-gradient(160deg, {{ g.color }}1c, transparent 60%); border-color:{{ g.color }}40;">
+    <div class="cat-card-top">
+      <div class="cat-icon-badge" style="background:{{ g.color }}26;">{{ icon_map.get(g.icon, "♻️") }}</div>
+      <div>
+        <span class="pill" style="background:{{ g.color }}22;color:{{ g.color }};">{{ g.bin }}</span>
+        <h4 style="margin:6px 0 0;">{{ g.title }}</h4>
+      </div>
+      <span class="points-badge" style="background:{{ g.color }};">+{{ g.points }} pts</span>
+    </div>
+
     <p>{{ g.summary }}</p>
-    <strong style="font-size:.82rem;color:var(--text-dim);">Common examples:</strong>
-    <p style="margin-top:4px;">{{ g.examples | join(', ') }}</p>
-    <strong style="font-size:.82rem;color:var(--text-dim);">Guidelines:</strong>
-    <ul>
+
+    <div class="cat-examples">
+      {% for ex in g.examples %}
+      <span class="chip" style="border-color:{{ g.color }}55;">{{ ex }}</span>
+      {% endfor %}
+    </div>
+
+    <button type="button" class="cat-toggle" data-i18n="guidelines.show_details">Show disposal steps ▾</button>
+    <ul class="cat-details">
       {% for tip in g.guidelines %}
       <li>{{ tip }}</li>
       {% endfor %}
@@ -23,4 +48,7 @@
   {% endfor %}
 </div>
 
+{% endblock %}
+{% block scripts %}
+<script src="{{ versioned_static('js/guidelines.js') }}"></script>
 {% endblock %}

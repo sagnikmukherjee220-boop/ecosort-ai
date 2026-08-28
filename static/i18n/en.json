@@ -54,6 +54,11 @@
     "s5_title": "Welcome to EcoSort AI",
     "s5_text": "Sign in to save your progress, or jump straight in as a guest."
   },
+  "guidelines": {
+    "points_intro": "Points you earn per item, by category:",
+    "show_details": "Show disposal steps ▾",
+    "hide_details": "Hide disposal steps ▴"
+  },
   "categories": {
     "biodegradable": { "label": "Biodegradable", "bin": "Green Bin", "tip": "Compostable organic waste. Breaks down naturally." },
     "recyclable": { "label": "Recyclable (Dry Waste)", "bin": "Blue Bin", "tip": "Clean paper, plastic, glass or metal that can be reprocessed." },
