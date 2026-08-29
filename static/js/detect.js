@@ -24,6 +24,9 @@
 
   const detList = document.getElementById("detList");
   const detCount = document.getElementById("detCount");
+  const otherCard = document.getElementById("otherCard");
+  const otherList = document.getElementById("otherList");
+  const otherCount = document.getElementById("otherCount");
 
   let stream = null;
   let busy = false;
@@ -141,6 +144,11 @@
     detCount.textContent = "0";
     const emptyText = window.I18N ? window.I18N.t("detect.empty_state_webcam") : "Start the camera or upload a photo to see detections here.";
     detList.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+    otherCard.style.display = "none";
+    otherList.innerHTML = "";
+    otherCount.textContent = "0";
+    lastDetections = [];
+    lastRenderDims = null;
   }
 
   retakeBtn.addEventListener("click", resumeLive);
@@ -254,65 +262,80 @@
   }
 
   // ---------------- Rendering ----------------
+  // Waste items and non-waste ("ignore") objects are always split into two
+  // separate lists — never merged into one — so a person scanning the
+  // results never has to double-check which bucket an item landed in.
+  function buildListItem(d) {
+    const name = escapeHtml(objectName(d.label));
+    const catLabel = escapeHtml(categoryField(d.category, "label", d.category_label));
+    const bin = escapeHtml(categoryField(d.category, "bin", d.bin));
+    const row = document.createElement("div");
+    row.className = "det-item";
+    row.innerHTML = `
+      <span class="dot" style="background:${d.color}"></span>
+      <div>
+        <div class="name">${name}</div>
+        <div class="meta">${catLabel} &middot; ${bin}</div>
+      </div>
+      <div class="conf">${Math.round(d.confidence * 100)}%</div>
+    `;
+    return row;
+  }
+
+  function drawBox(d, w) {
+    // draw box — the vision model doesn't give reliable pixel-accurate
+    // boxes, so d.box is null; only draw when one is actually present.
+    if (!d.box) return;
+    const name = escapeHtml(objectName(d.label));
+    const catLabel = escapeHtml(categoryField(d.category, "label", d.category_label));
+    const [x1, y1, x2, y2] = d.box;
+    ctx.strokeStyle = d.color;
+    ctx.lineWidth = Math.max(2, w / 300);
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.fillStyle = d.color;
+    const text = `${name} · ${catLabel}`;
+    ctx.font = `${Math.max(13, w / 55)}px Segoe UI, sans-serif`;
+    const textW = ctx.measureText(text).width + 10;
+    ctx.fillRect(x1, Math.max(0, y1 - 22), textW, 22);
+    ctx.fillStyle = "#04140b";
+    ctx.fillText(text, x1 + 5, Math.max(15, y1 - 6));
+  }
+
   function renderDetections(detections, w, h, refEl, isNewCapture = true) {
     lastDetections = detections;
     lastRenderDims = { w, h };
 
     ctx.clearRect(0, 0, w, h);
-    const hideIgnored = ignoreToggle.checked;
-    const visible = hideIgnored ? detections.filter((d) => d.category !== "ignore") : detections;
+    detections.forEach((d) => drawBox(d, w));
 
-    detCount.textContent = visible.length;
+    const wasteItems = detections.filter((d) => d.category !== "ignore");
+    const otherItems = detections.filter((d) => d.category === "ignore");
+
+    // Waste list
+    detCount.textContent = wasteItems.length;
     detList.innerHTML = "";
-
-    const emptyKey = video.style.display === "none" ? "detect.empty_state_upload" : "detect.empty_state_webcam";
-    if (visible.length === 0) {
+    if (wasteItems.length === 0) {
+      const emptyKey = video.style.display === "none" ? "detect.empty_state_upload" : "detect.empty_state_webcam";
       const emptyText = window.I18N ? window.I18N.t(emptyKey) : "No waste items detected yet.";
       detList.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+    } else {
+      wasteItems.forEach((d) => detList.appendChild(buildListItem(d)));
     }
 
-    visible.forEach((d) => {
-      const name = escapeHtml(objectName(d.label));
-      const catLabel = escapeHtml(categoryField(d.category, "label", d.category_label));
-      const bin = escapeHtml(categoryField(d.category, "bin", d.bin));
-
-      // draw box — the vision model doesn't give reliable pixel-accurate
-      // boxes, so d.box is null; only draw when one is actually present.
-      if (d.box) {
-        const [x1, y1, x2, y2] = d.box;
-        ctx.strokeStyle = d.color;
-        ctx.lineWidth = Math.max(2, w / 300);
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-        ctx.fillStyle = d.color;
-        const text = `${name} · ${catLabel}`;
-        ctx.font = `${Math.max(13, w / 55)}px Segoe UI, sans-serif`;
-        const textW = ctx.measureText(text).width + 10;
-        ctx.fillRect(x1, Math.max(0, y1 - 22), textW, 22);
-        ctx.fillStyle = "#04140b";
-        ctx.fillText(text, x1 + 5, Math.max(15, y1 - 6));
-      }
-
-      // list item
-      const row = document.createElement("div");
-      row.className = "det-item";
-      row.innerHTML = `
-        <span class="dot" style="background:${d.color}"></span>
-        <div>
-          <div class="name">${name}</div>
-          <div class="meta">${catLabel} &middot; ${bin}</div>
-        </div>
-        <div class="conf">${Math.round(d.confidence * 100)}%</div>
-      `;
-      detList.appendChild(row);
-    });
+    // Non-waste list — its own card, shown only when the toggle is on and
+    // there's actually something in it, so it never sits there empty.
+    const showOther = ignoreToggle.checked && otherItems.length > 0;
+    otherCard.style.display = showOther ? "" : "none";
+    otherCount.textContent = otherItems.length;
+    otherList.innerHTML = "";
+    otherItems.forEach((d) => otherList.appendChild(buildListItem(d)));
 
     // read out every detected waste item (not just the top one) — this is
     // a one-shot batch per Capture & Analyze click, not a continuous
     // stream, so there's no risk of it babbling on repeatedly.
-    const wasteOnly = detections.filter((d) => d.category !== "ignore");
-    lastSpokenBatch = wasteOnly;
-    if (isNewCapture && voiceEnabled && wasteOnly.length) {
-      speakAllDetections(wasteOnly);
+    lastSpokenBatch = wasteItems;
+    if (isNewCapture && voiceEnabled && wasteItems.length) {
+      speakAllDetections(wasteItems);
     }
   }
 
@@ -357,6 +380,14 @@
   // Doesn't auto-speak — that would be surprising just from switching a
   // dropdown; use the voice button to hear it in the new language.
   document.addEventListener("i18n:change", () => {
+    if (lastRenderDims) {
+      renderDetections(lastDetections, lastRenderDims.w, lastRenderDims.h, undefined, false);
+    }
+  });
+
+  // Toggling "Also show non-waste objects" just reveals/hides the second
+  // card — it never merges its contents into the waste list.
+  ignoreToggle.addEventListener("change", () => {
     if (lastRenderDims) {
       renderDetections(lastDetections, lastRenderDims.w, lastRenderDims.h, undefined, false);
     }

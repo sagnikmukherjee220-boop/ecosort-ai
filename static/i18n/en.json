@@ -27,7 +27,6 @@
     "capture_analyze": "Capture & Analyze",
     "retake": "Retake",
     "voice_guidance": "Voice guidance",
-    "hide_nonwaste": "Hide non-waste objects",
     "analyze": "Analyze Photo",
     "analyzing": "Analyzing...",
     "detected_items": "Detected Items",
@@ -35,7 +34,10 @@
     "empty_state_upload": "No waste items detected yet. Point the camera at an object.",
     "speak_this_is": "This is",
     "not_waste": "Not a waste item",
-    "what_it_sorts": "What it can sort:"
+    "what_it_sorts": "What it can sort:",
+    "show_nonwaste": "Also show non-waste objects",
+    "waste_items": "Waste Items",
+    "other_items": "Not Waste"
   },
   "intro": {
     "skip": "Skip",

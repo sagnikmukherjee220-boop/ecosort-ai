@@ -50,15 +50,22 @@
         <svg class="icon-off" viewBox="0 0 24 24" style="display:none;"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 5M21 9l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span data-i18n="detect.voice_guidance">Voice guidance</span>
       </button>
-      <label class="toggle-row"><input type="checkbox" id="ignoreToggle" checked> <span data-i18n="detect.hide_nonwaste">Hide non-waste objects</span></label>
+      <label class="toggle-row"><input type="checkbox" id="ignoreToggle"> <span data-i18n="detect.show_nonwaste">Also show non-waste objects</span></label>
     </div>
 
   </div>
 
-  <div class="card">
-    <h3 style="margin-top:0;"><span data-i18n="detect.detected_items">Detected Items</span> <span id="detCount" class="pill">0</span></h3>
-    <div class="det-list" id="detList">
-      <div class="empty-state" data-i18n="detect.empty_state_webcam">Start the camera or upload a photo to see detections here.</div>
+  <div>
+    <div class="card">
+      <h3 style="margin-top:0;"><span data-i18n="detect.waste_items">Waste Items</span> <span id="detCount" class="pill">0</span></h3>
+      <div class="det-list" id="detList">
+        <div class="empty-state" data-i18n="detect.empty_state_webcam">Start the camera or upload a photo to see detections here.</div>
+      </div>
+    </div>
+
+    <div class="card" id="otherCard" style="margin-top:16px;display:none;">
+      <h3 style="margin-top:0;"><span data-i18n="detect.other_items">Not Waste</span> <span id="otherCount" class="pill">0</span></h3>
+      <div class="det-list" id="otherList"></div>
     </div>
   </div>
 </div>

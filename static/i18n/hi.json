@@ -27,7 +27,6 @@
     "capture_analyze": "फ़ोटो लें और जांचें",
     "retake": "फिर से लें",
     "voice_guidance": "आवाज़ मार्गदर्शन",
-    "hide_nonwaste": "गैर-कचरा वस्तुएं छिपाएं",
     "analyze": "फ़ोटो जांचें",
     "analyzing": "जांच हो रही है...",
     "detected_items": "पहचानी गई वस्तुएं",
@@ -35,7 +34,10 @@
     "empty_state_upload": "अभी तक कोई कचरा वस्तु नहीं मिली। कैमरे को किसी वस्तु की ओर करें।",
     "speak_this_is": "यह है",
     "not_waste": "यह कचरा नहीं है",
-    "what_it_sorts": "यह क्या छांट सकता है:"
+    "what_it_sorts": "यह क्या छांट सकता है:",
+    "show_nonwaste": "गैर-कचरा वस्तुएं भी दिखाएं",
+    "waste_items": "कचरा वस्तुएं",
+    "other_items": "कचरा नहीं"
   },
   "intro": {
     "skip": "छोड़ें",
