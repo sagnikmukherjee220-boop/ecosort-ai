@@ -191,11 +191,6 @@ body{
 .voice-btn{display:flex;align-items:center;gap:8px;}
 .voice-btn svg{width:18px;height:18px;flex-shrink:0;}
 .voice-btn.active{background:linear-gradient(135deg, rgba(56,224,122,.22), rgba(32,201,224,.18));color:var(--accent);border-color:transparent;}
-.sensitivity-row{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:.85rem;color:var(--text-dim);}
-.sensitivity-btns{display:flex;gap:8px;}
-.sensitivity-btns button{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);padding:9px 10px;border-radius:10px;cursor:pointer;font-weight:600;font-size:.85rem;}
-.sensitivity-btns button.active{background:linear-gradient(135deg, var(--accent), var(--accent2));color:#04140b;border-color:transparent;}
-.sensitivity-hint{font-size:.76rem;color:var(--text-dim);opacity:.8;}
 
 .nav-lang{display:flex;align-items:center;}
 .lang-select{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:7px 10px;font-size:.82rem;cursor:pointer;}

@@ -10,6 +10,18 @@
   <button id="tabUpload">🖼 <span data-i18n="detect.tab_upload">Upload Photo</span></button>
 </div>
 
+{% set icon_map = {"leaf": "🍃", "recycle": "♻️", "trash": "🗑️", "cpu": "💻", "hazard": "⚠️"} %}
+<div class="points-strip">
+  <span class="points-strip-label" data-i18n="detect.what_it_sorts">What it can sort:</span>
+  <div class="points-chips">
+    {% for c in categories %}
+    <span class="points-chip" style="background:{{ c.color }}22;color:{{ c.color }};border-color:{{ c.color }}55;">
+      {{ icon_map.get(c.icon, "♻️") }} <span data-i18n="guidelines_content.{{ c.key }}.short_name">{{ c.title.split(' ')[0] }}</span>
+    </span>
+    {% endfor %}
+  </div>
+</div>
+
 <div class="detect-layout">
   <div>
     <div class="video-wrap" id="videoWrap">
@@ -41,15 +53,6 @@
       <label class="toggle-row"><input type="checkbox" id="ignoreToggle" checked> <span data-i18n="detect.hide_nonwaste">Hide non-waste objects</span></label>
     </div>
 
-    <div class="sensitivity-row">
-      <span data-i18n="detect.sensitivity">Detection sensitivity</span>
-      <div class="sensitivity-btns" id="sensitivityBtns">
-        <button type="button" data-conf="0.5" data-i18n="detect.sensitivity_low">Low</button>
-        <button type="button" data-conf="0.35" class="active" data-i18n="detect.sensitivity_medium">Medium</button>
-        <button type="button" data-conf="0.2" data-i18n="detect.sensitivity_high">High</button>
-      </div>
-      <span class="sensitivity-hint" data-i18n="detect.sensitivity_hint">Low finds more items but can make mistakes. High is stricter and more accurate.</span>
-    </div>
   </div>
 
   <div class="card">

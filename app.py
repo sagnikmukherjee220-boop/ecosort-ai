@@ -226,7 +226,11 @@ def home():
 
 @app.route("/detect")
 def detect_page():
-    return render_template("detect.html")
+    import json, os
+    path = os.path.join(os.path.dirname(__file__), "data", "guidelines.json")
+    with open(path, encoding="utf-8") as f:
+        categories = json.load(f)
+    return render_template("detect.html", categories=categories)
 
 
 @app.route("/dashboard")

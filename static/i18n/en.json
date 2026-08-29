@@ -1,5 +1,8 @@
 {
-  "meta": { "name": "English", "voice": "en-IN" },
+  "meta": {
+    "name": "English",
+    "voice": "en-IN"
+  },
   "nav": {
     "home": "Home",
     "detect": "Detect",
@@ -27,16 +30,12 @@
     "hide_nonwaste": "Hide non-waste objects",
     "analyze": "Analyze Photo",
     "analyzing": "Analyzing...",
-    "sensitivity": "Detection sensitivity",
-    "sensitivity_hint": "High finds more items but can make mistakes. Low is stricter and more accurate.",
-    "sensitivity_low": "Low",
-    "sensitivity_medium": "Medium",
-    "sensitivity_high": "High",
     "detected_items": "Detected Items",
     "empty_state_webcam": "Start the camera or upload a photo to see detections here.",
     "empty_state_upload": "No waste items detected yet. Point the camera at an object.",
     "speak_this_is": "This is",
-    "not_waste": "Not a waste item"
+    "not_waste": "Not a waste item",
+    "what_it_sorts": "What it can sort:"
   },
   "intro": {
     "skip": "Skip",
@@ -159,7 +158,14 @@
       "title": "Biodegradable Waste",
       "bin": "Green Bin",
       "summary": "Organic matter that decomposes naturally through biological processes.",
-      "examples": ["Fruit & vegetable peels", "Leftover food", "Tea leaves & coffee grounds", "Garden/yard waste", "Paper napkins (soiled)", "Eggshells"],
+      "examples": [
+        "Fruit & vegetable peels",
+        "Leftover food",
+        "Tea leaves & coffee grounds",
+        "Garden/yard waste",
+        "Paper napkins (soiled)",
+        "Eggshells"
+      ],
       "guidelines": [
         "Collect in a separate green/organic bin, ideally lined with a compostable or paper bag — not plastic.",
         "Keep it dry-ish; excess liquid speeds up foul odour and pest attraction.",
@@ -173,7 +179,13 @@
       "title": "Recyclable (Dry) Waste",
       "bin": "Blue Bin",
       "summary": "Clean, dry materials — paper, plastic, glass, metal — that can be reprocessed into new products.",
-      "examples": ["Plastic bottles", "Glass jars/bottles", "Metal cans", "Cardboard & newspaper", "Books & paper"],
+      "examples": [
+        "Plastic bottles",
+        "Glass jars/bottles",
+        "Metal cans",
+        "Cardboard & newspaper",
+        "Books & paper"
+      ],
       "guidelines": [
         "Rinse containers to remove food residue before disposal — contamination is the #1 reason recyclables end up in landfill.",
         "Flatten cardboard boxes and plastic bottles to save space and ease transport.",
@@ -187,7 +199,13 @@
       "title": "Non-Recyclable (Reject) Waste",
       "bin": "Black Bin",
       "summary": "Mixed-material, soiled, or low-value items that current recycling streams cannot process.",
-      "examples": ["Multi-layer plastic wrappers", "Soiled tissues", "Broken ceramics", "Cigarette butts", "Thermocol/styrofoam pieces"],
+      "examples": [
+        "Multi-layer plastic wrappers",
+        "Soiled tissues",
+        "Broken ceramics",
+        "Cigarette butts",
+        "Thermocol/styrofoam pieces"
+      ],
       "guidelines": [
         "Minimise generation at source — avoid single-use, multi-layered packaging where possible.",
         "Store separately from recyclables and biodegradables so it doesn't contaminate them.",
@@ -200,7 +218,14 @@
       "title": "E-Waste",
       "bin": "Authorised E-Waste Collection Point",
       "summary": "Discarded electrical/electronic devices and accessories — contains valuable recoverable metals as well as toxic substances.",
-      "examples": ["Mobile phones", "Laptops & keyboards", "TVs & monitors", "Chargers & cables", "Batteries", "Home appliances"],
+      "examples": [
+        "Mobile phones",
+        "Laptops & keyboards",
+        "TVs & monitors",
+        "Chargers & cables",
+        "Batteries",
+        "Home appliances"
+      ],
       "guidelines": [
         "NEVER put e-waste in regular household bins — it contains lead, mercury, cadmium and other toxins that leach into soil and groundwater.",
         "Wipe/factory-reset devices to protect your personal data before handing them over.",
@@ -214,7 +239,14 @@
       "title": "Hazardous Waste",
       "bin": "Hazardous Waste Facility",
       "summary": "Chemically reactive, corrosive, toxic, flammable or infectious waste requiring specialised handling.",
-      "examples": ["Paints & solvents", "Pesticides", "Expired medicines", "Used batteries", "Fluorescent/CFL bulbs", "Syringes/medical waste"],
+      "examples": [
+        "Paints & solvents",
+        "Pesticides",
+        "Expired medicines",
+        "Used batteries",
+        "Fluorescent/CFL bulbs",
+        "Syringes/medical waste"
+      ],
       "guidelines": [
         "Never pour down the drain or mix with regular waste — it can contaminate water supplies and injure sanitation workers.",
         "Store in original, labelled, sealed containers away from children and heat sources.",
@@ -225,22 +257,78 @@
     }
   },
   "categories": {
-    "biodegradable": { "label": "Biodegradable", "bin": "Green Bin", "tip": "Compostable organic waste. Breaks down naturally." },
-    "recyclable": { "label": "Recyclable (Dry Waste)", "bin": "Blue Bin", "tip": "Clean paper, plastic, glass or metal that can be reprocessed." },
-    "non_recyclable": { "label": "Non-Recyclable (Reject Waste)", "bin": "Black Bin", "tip": "Mixed-material or soiled waste that cannot be recycled or composted." },
-    "e_waste": { "label": "E-Waste", "bin": "E-Waste Collection Point", "tip": "Electronic/electrical items. Contains recoverable metals and toxic components." },
-    "hazardous": { "label": "Hazardous Waste", "bin": "Hazardous Waste Facility", "tip": "Chemically reactive, toxic or flammable waste needing special handling." },
-    "ignore": { "label": "Not Waste", "bin": "-", "tip": "Not a waste item. This project focuses on segregating discarded objects, so people, animals, vehicles and furniture are ignored." }
+    "biodegradable": {
+      "label": "Biodegradable",
+      "bin": "Green Bin",
+      "tip": "Compostable organic waste. Breaks down naturally."
+    },
+    "recyclable": {
+      "label": "Recyclable (Dry Waste)",
+      "bin": "Blue Bin",
+      "tip": "Clean paper, plastic, glass or metal that can be reprocessed."
+    },
+    "non_recyclable": {
+      "label": "Non-Recyclable (Reject Waste)",
+      "bin": "Black Bin",
+      "tip": "Mixed-material or soiled waste that cannot be recycled or composted."
+    },
+    "e_waste": {
+      "label": "E-Waste",
+      "bin": "E-Waste Collection Point",
+      "tip": "Electronic/electrical items. Contains recoverable metals and toxic components."
+    },
+    "hazardous": {
+      "label": "Hazardous Waste",
+      "bin": "Hazardous Waste Facility",
+      "tip": "Chemically reactive, toxic or flammable waste needing special handling."
+    },
+    "ignore": {
+      "label": "Not Waste",
+      "bin": "-",
+      "tip": "Not a waste item. This project focuses on segregating discarded objects, so people, animals, vehicles and furniture are ignored."
+    }
   },
   "objects": {
-    "banana": "Banana", "apple": "Apple", "sandwich": "Sandwich", "orange": "Orange", "broccoli": "Broccoli",
-    "carrot": "Carrot", "hot dog": "Hot Dog", "pizza": "Pizza", "donut": "Donut", "cake": "Cake",
-    "bottle": "Bottle", "wine glass": "Wine Glass", "cup": "Cup", "book": "Book", "vase": "Vase",
-    "bowl": "Bowl", "scissors": "Scissors", "sports ball": "Ball", "frisbee": "Frisbee",
-    "fork": "Fork", "knife": "Knife", "spoon": "Spoon", "teddy bear": "Teddy Bear", "toothbrush": "Toothbrush",
-    "handbag": "Handbag", "backpack": "Backpack", "umbrella": "Umbrella", "tie": "Tie", "suitcase": "Suitcase",
-    "tv": "TV", "laptop": "Laptop", "mouse": "Mouse", "remote": "Remote Control", "keyboard": "Keyboard",
-    "cell phone": "Mobile Phone", "microwave": "Microwave", "oven": "Oven", "toaster": "Toaster",
-    "hair drier": "Hair Dryer", "clock": "Clock", "refrigerator": "Refrigerator"
+    "banana": "Banana",
+    "apple": "Apple",
+    "sandwich": "Sandwich",
+    "orange": "Orange",
+    "broccoli": "Broccoli",
+    "carrot": "Carrot",
+    "hot dog": "Hot Dog",
+    "pizza": "Pizza",
+    "donut": "Donut",
+    "cake": "Cake",
+    "bottle": "Bottle",
+    "wine glass": "Wine Glass",
+    "cup": "Cup",
+    "book": "Book",
+    "vase": "Vase",
+    "bowl": "Bowl",
+    "scissors": "Scissors",
+    "sports ball": "Ball",
+    "frisbee": "Frisbee",
+    "fork": "Fork",
+    "knife": "Knife",
+    "spoon": "Spoon",
+    "teddy bear": "Teddy Bear",
+    "toothbrush": "Toothbrush",
+    "handbag": "Handbag",
+    "backpack": "Backpack",
+    "umbrella": "Umbrella",
+    "tie": "Tie",
+    "suitcase": "Suitcase",
+    "tv": "TV",
+    "laptop": "Laptop",
+    "mouse": "Mouse",
+    "remote": "Remote Control",
+    "keyboard": "Keyboard",
+    "cell phone": "Mobile Phone",
+    "microwave": "Microwave",
+    "oven": "Oven",
+    "toaster": "Toaster",
+    "hair drier": "Hair Dryer",
+    "clock": "Clock",
+    "refrigerator": "Refrigerator"
   }
 }

@@ -21,7 +21,6 @@
   const voiceIconOn = voiceBtn.querySelector(".icon-on");
   const voiceIconOff = voiceBtn.querySelector(".icon-off");
   const ignoreToggle = document.getElementById("ignoreToggle");
-  const sensitivityBtns = document.getElementById("sensitivityBtns");
 
   const detList = document.getElementById("detList");
   const detCount = document.getElementById("detCount");
@@ -30,7 +29,10 @@
   let busy = false;
   let uploadedDataUrl = null;
   let capturedDataUrl = null; // frozen webcam frame, set once "Capture & Analyze" is clicked
-  let currentConf = 0.35;
+  // Fixed at a balanced middle-ground threshold — the old Low/Medium/High
+  // picker asked users to make a judgment call they had no way to evaluate,
+  // so it's gone; this value is the "Medium" preset that worked well for most shots.
+  const currentConf = 0.35;
   let lastDetections = []; // re-rendered when the language changes
   let lastRenderDims = null;
   let voiceEnabled = true;
@@ -59,24 +61,6 @@
     updateVoiceBtnIcon();
   });
   updateVoiceBtnIcon();
-
-  // ---------------- Sensitivity presets (replaces raw numeric slider) ----------------
-  // If a frame is already frozen/captured (webcam) or a photo is loaded
-  // (upload), switching sensitivity re-analyzes that *same* image instead
-  // of requiring a fresh capture — the whole point of freezing the frame.
-  sensitivityBtns.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-conf]");
-    if (!btn) return;
-    currentConf = parseFloat(btn.dataset.conf);
-    sensitivityBtns.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
-    if (capturedDataUrl) {
-      const idle = window.I18N ? window.I18N.t("detect.retake", "Retake") : "Retake";
-      runAnalysis(capturedDataUrl, "webcam", retakeBtn, idle);
-    } else if (uploadedDataUrl) {
-      const idle = window.I18N ? window.I18N.t("detect.analyze", "Analyze Photo") : "Analyze Photo";
-      runAnalysis(uploadedDataUrl, "upload", analyzeBtn, idle);
-    }
-  });
 
   // ---------------- Tab switching ----------------
   function showWebcamTab() {
@@ -228,11 +212,6 @@
     const wasDisabled = loadingBtn.disabled;
     loadingBtn.disabled = true;
     loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
-    // Visibly disable the sensitivity buttons too — otherwise a click while
-    // a request is already in flight silently does nothing, which reads as
-    // broken rather than "already working on it".
-    const sensBtns = sensitivityBtns.querySelectorAll("button");
-    sensBtns.forEach((b) => (b.disabled = true));
     try {
       const data = await sendForDetection(dataUrl, source);
       renderDetections(data.detections, overlay.width, overlay.height);
@@ -242,7 +221,6 @@
     busy = false;
     loadingBtn.disabled = wasDisabled;
     loadingBtn.textContent = idleText;
-    sensBtns.forEach((b) => (b.disabled = false));
     // Guard against the camera having been stopped while this request was
     // in flight — don't let a stale response re-enable a dead capture button.
     if (source === "webcam" && !stream) loadingBtn.disabled = true;
