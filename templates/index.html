@@ -53,7 +53,7 @@
   <div class="hero-text">
     <span class="eyebrow" data-i18n="home.eyebrow">♻ Computer Vision</span>
     <h1 data-i18n-html="home.hero_title">Segregate waste <span>instantly</span> with AI, not guesswork.</h1>
-    <p data-i18n="home.hero_sub">EcoSort AI uses an AI vision model to identify what you're holding up to the camera — almost anything, not just a fixed list — and tells you exactly which bin it belongs in: biodegradable, recyclable, non-recyclable, e-waste or hazardous.</p>
+    <p data-i18n="home.hero_sub">Point your camera at anything. No bin charts to memorize — the AI does the thinking, and tells you exactly where it goes.</p>
     <div class="hero-cta">
       <a href="{{ url_for('detect_page') }}" class="btn btn-primary">
         <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -74,6 +74,57 @@
     </div>
   </div>
 </section>
+
+<div class="kicker-block">
+  <span class="kicker" data-i18n="home.crisis_kicker">The Problem</span>
+  <h2 data-i18n="home.crisis_title">Waste segregation still isn't happening</h2>
+</div>
+<div class="big-stat-grid">
+  <div class="big-stat">
+    <div class="big-num" data-count-to="2.24" data-suffix="B">0</div>
+    <div class="big-lbl" data-i18n="home.crisis_stat1">tonnes of waste generated worldwide, every year</div>
+  </div>
+  <div class="big-stat">
+    <div class="big-num" data-count-to="33" data-suffix="%">0</div>
+    <div class="big-lbl" data-i18n="home.crisis_stat2">of it is never managed safely — it just piles up</div>
+  </div>
+  <div class="big-stat">
+    <div class="big-num" data-count-to="62" data-suffix="M+">0</div>
+    <div class="big-lbl" data-i18n="home.crisis_stat3">tonnes generated in India alone, every year</div>
+  </div>
+  <div class="big-stat">
+    <div class="big-num" data-i18n="home.crisis_stat4_num">Most</div>
+    <div class="big-lbl" data-i18n="home.crisis_stat4">household waste is never separated at the source</div>
+  </div>
+</div>
+<p class="stat-source" data-i18n="home.crisis_source">Source: World Bank — What a Waste 2.0; CPCB, India</p>
+
+<div class="kicker-block">
+  <span class="kicker" data-i18n="home.compare_kicker">Why EcoSort AI</span>
+  <h2 data-i18n="home.compare_title">Skip the guesswork entirely</h2>
+</div>
+<div class="compare-grid">
+  <div class="compare-row">
+    <div class="compare-head" data-i18n="home.compare_r1_label">Knowing which bin</div>
+    <div class="compare-old" data-i18n="home.compare_r1_old">Memorize categories</div>
+    <div class="compare-new" data-i18n="home.compare_r1_new">Camera does the thinking</div>
+  </div>
+  <div class="compare-row">
+    <div class="compare-head" data-i18n="home.compare_r2_label">What it recognizes</div>
+    <div class="compare-old" data-i18n="home.compare_r2_old">A fixed, easy-to-miss list</div>
+    <div class="compare-new" data-i18n="home.compare_r2_new">Almost anything you show it</div>
+  </div>
+  <div class="compare-row">
+    <div class="compare-head" data-i18n="home.compare_r3_label">Language</div>
+    <div class="compare-old" data-i18n="home.compare_r3_old">One language, fine print</div>
+    <div class="compare-new" data-i18n="home.compare_r3_new">6 languages, read aloud</div>
+  </div>
+  <div class="compare-row">
+    <div class="compare-head" data-i18n="home.compare_r4_label">What you need</div>
+    <div class="compare-old" data-i18n="home.compare_r4_old">A special smart bin</div>
+    <div class="compare-new" data-i18n="home.compare_r4_new">Any phone. Free. Anywhere.</div>
+  </div>
+</div>
 
 <div class="stat-strip">
   <div class="card"><div class="num">5</div><div class="lbl" data-i18n="home.stat_categories">Waste Categories</div></div>
@@ -128,4 +179,5 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ versioned_static('js/intro.js') }}"></script>
+<script src="{{ versioned_static('js/home.js') }}"></script>
 {% endblock %}
