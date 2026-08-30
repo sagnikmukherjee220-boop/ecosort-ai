@@ -1,71 +1,53 @@
-// scroll.js — shared scroll-linked reveal engine, loaded on every page.
-// Unlike a threshold-triggered IntersectionObserver + fixed-duration CSS
-// transition (which plays a timed animation once and can look out of sync
-// with how fast someone is actually scrolling), this drives each element's
-// opacity/translateY directly off its current position in the viewport,
-// recomputed every animation frame while scrolling. Scroll fast, it reveals
-// fast; scroll slow, it eases in slowly — it's tied to the input itself,
-// which is what actually reads as "smooth". Reveal only ever runs forward:
-// once an element fully arrives it's left alone, so scrolling back up
-// doesn't fade already-seen content back out — you can always scroll up
-// to see several revealed sections together.
+// scroll.js — shared scroll-in reveal engine, loaded on every page.
+//
+// History: this used to bind opacity/transform directly to live scroll
+// position every animation frame. That looked great scrolling straight
+// down, but broke in two visible ways once stagger delays (needed so a
+// row of 3-6 cards doesn't all pop at once) entered the picture: (1) if a
+// user stopped scrolling before a *staggered* card's offset-delayed
+// threshold was reached, it froze forever at whatever partial opacity it
+// last computed — "too light to even start"; (2) because such a card was
+// still being tracked, ANY later scroll (including scrolling back up)
+// recomputed its opacity from the new position, making already-seen
+// content fade or vanish while scrolling up.
+//
+// Fix: trigger once via IntersectionObserver, then hand off to a normal
+// CSS transition. A CSS transition runs to completion on its own timer —
+// it can't get stuck partway, and once it reaches opacity:1 we never
+// touch that element's inline style again, so scrolling up can't undo it.
 window.EcoReveal = (() => {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const registered = [];
-  let ticking = false;
 
-  function update() {
-    const vh = window.innerHeight;
-    const start = vh * 0.94; // element top below this: fully hidden
-    const end = vh * 0.55; // element top at/above this: fully revealed
-    // Walk backwards so we can drop finished items from `registered`
-    // in place without skipping the next one.
-    for (let i = registered.length - 1; i >= 0; i--) {
-      const { el, offset } = registered[i];
-      const rect = el.getBoundingClientRect();
-      if (rect.bottom < -200 || rect.top > vh + 200) continue; // skip far-offscreen writes
-      let p = (start - rect.top - offset) / (start - end);
-      p = p < 0 ? 0 : p > 1 ? 1 : p;
-      const eased = 1 - Math.pow(1 - p, 3);
-      el.style.opacity = eased;
-      el.style.transform = `translateY(${(1 - eased) * 34}px)`;
-      // Once an element has fully arrived, stop tracking it — it stays
-      // visible for good from here on, even if the user scrolls back up
-      // past it later. Reveal is a one-way "arrive once" effect, not a
-      // constant tug-of-war with scroll position (which was the
-      // "fades back out while scrolling up" complaint).
-      if (p >= 1) {
-        el.style.willChange = "";
-        registered.splice(i, 1);
-      }
+  function bind(elements, { stagger = 70 } = {}) {
+    const els = Array.from(elements || []);
+    if (!els.length) return;
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      return; // leave fully visible, untouched
     }
-    ticking = false;
+
+    els.forEach((el, i) => {
+      const delay = Math.min(i, 6) * stagger; // cap so long rows don't drag out
+      el.style.opacity = "0";
+      el.style.transform = "translateY(34px)";
+      el.style.transition =
+        `opacity .9s cubic-bezier(.22,1,.36,1) ${delay}ms, ` +
+        `transform .9s cubic-bezier(.22,1,.36,1) ${delay}ms`;
+    });
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.style.opacity = "1";
+          entry.target.style.transform = "none";
+          io.unobserve(entry.target); // done for good — never revisited
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -10% 0px" }
+    );
+    els.forEach((el) => io.observe(el));
   }
 
-  function onScroll() {
-    if (!ticking) {
-      requestAnimationFrame(update);
-      ticking = true;
-    }
-  }
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll, { passive: true });
-
-  return {
-    // Registers a NodeList/array of elements. `stagger` (ms-equivalent, in
-    // px of extra scroll offset) staggers a group so they don't all arrive
-    // in perfect lockstep — each element just needs a little more scroll
-    // before it starts revealing than the one before it.
-    bind(elements, { stagger = 0 } = {}) {
-      const els = Array.from(elements || []);
-      if (!els.length) return;
-      if (reduceMotion) return; // leave fully visible, untouched
-      els.forEach((el, i) => {
-        el.style.willChange = "opacity, transform";
-        registered.push({ el, offset: i * stagger });
-      });
-      update();
-    },
-  };
+  return { bind };
 })();

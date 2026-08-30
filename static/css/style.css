@@ -155,14 +155,12 @@ body{
 }
 
 /* ---------- Scroll-in reveal ---------- */
-/* Opacity/transform for .reveal elements are now driven directly, frame by
-   frame, by scroll.js's scroll position — not a fixed-duration CSS
-   transition triggered once at a threshold. That's what makes it track the
-   scroll itself (fast scroll = fast reveal, slow scroll = slow reveal)
-   instead of a timed pop that's out of sync with how fast you're actually
-   scrolling. No base opacity:0 rule here on purpose — if JS fails to load,
-   cards simply stay fully visible instead of getting stuck invisible.
-   will-change is applied only while actively animating (see scroll.js). */
+/* No CSS rules needed here — scroll.js (window.EcoReveal) sets each
+   element's initial opacity/transform/transition inline when it binds
+   them, then flips to opacity:1 once via IntersectionObserver, letting
+   the CSS transition finish on its own timer. If JS fails to load,
+   elements simply keep their default fully-visible state instead of
+   getting stuck invisible. */
 
 /* Every page's title + subtitle fade up on load — same treatment as the
    homepage hero, so Detect/Dashboard/Guidelines/About don't feel static
