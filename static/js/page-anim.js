@@ -1,11 +1,10 @@
 // page-anim.js — site-wide scroll-in reveal for card-like sections outside
 // the homepage (Guidelines, Detect, Dashboard, About). Loaded on every
 // page from base.html; simply does nothing if a page has none of these
-// containers. Uses the same .reveal/.in classes and easing as the
-// homepage (see style.css + home.js) so the feel is consistent everywhere.
+// containers. Motion is handled by scroll.js's EcoReveal (scroll-linked,
+// not a timed transition) so the feel is identical to the homepage.
 (() => {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (!("IntersectionObserver" in window)) return;
+  if (!window.EcoReveal) return;
 
   const groups = [
     document.querySelectorAll(".dash-grid > .card"),          // Dashboard
@@ -17,23 +16,5 @@
     document.querySelectorAll(".video-wrap"),                 // Detect camera/preview frame
   ];
 
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          io.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
-  );
-
-  groups.forEach((group) => {
-    group.forEach((el, i) => {
-      el.classList.add("reveal");
-      el.style.transitionDelay = `${i * 100}ms`;
-      io.observe(el);
-    });
-  });
+  groups.forEach((group) => window.EcoReveal.bind(group, { stagger: 90 }));
 })();

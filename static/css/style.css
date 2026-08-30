@@ -75,26 +75,52 @@ body{
 .site-footer{text-align:center;color:var(--text-dim);font-size:.8rem;padding:22px 5vw 40px;opacity:.7;}
 
 .card{
+  position:relative;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:24px;
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
+  overflow:hidden;
+  transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, border-color .35s ease;
+}
+/* A thin gradient line sweeps in across the top of any card on hover —
+   the same small "alive" touch on every card site-wide, not just the
+   homepage feature grid. */
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .45s cubic-bezier(.22,1,.36,1);
+  pointer-events:none;
+}
+.card:hover{transform:translateY(-6px);border-color:rgba(56,224,122,.4);box-shadow:0 20px 44px rgba(0,0,0,.4);}
+.card:hover::before{transform:scaleX(1);}
+@media (hover:none){
+  .card:hover{transform:none;box-shadow:var(--shadow);}
+  .card:hover::before{transform:scaleX(0);}
 }
 
 /* ---------- BUTTONS ---------- */
 .btn{
-  display:inline-flex;align-items:center;gap:8px;
+  display:inline-flex;align-items:center;gap:8px;position:relative;overflow:hidden;
   padding:13px 26px;border-radius:14px;border:none;
   font-weight:600;font-size:.96rem;cursor:pointer;text-decoration:none;
-  transition:transform .15s, box-shadow .15s, opacity .15s;
+  transition:transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s, opacity .15s;
 }
 .btn svg{width:18px;height:18px;}
 .btn-primary{background:linear-gradient(135deg, var(--accent), var(--accent2));color:#04140b;box-shadow:0 8px 24px rgba(56,224,122,.28);}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(56,224,122,.4);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(56,224,122,.45);}
+.btn-primary:active{transform:translateY(0) scale(.97);}
+.btn-primary::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.4) 48%, transparent 66%);
+  transform:translateX(-120%);
+}
+.btn-primary:hover::after{transform:translateX(120%);transition:transform .7s ease;}
 .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border);}
-.btn-ghost:hover{background:var(--surface-strong);}
+.btn-ghost:hover{background:var(--surface-strong);transform:translateY(-2px);}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
 /* ---------- HERO ---------- */
@@ -129,15 +155,14 @@ body{
 }
 
 /* ---------- Scroll-in reveal ---------- */
-/* Cards start slightly lower + transparent, then home.js flips them to
-   .in (via IntersectionObserver) as they scroll into view, one after
-   another using each element's own transition-delay. Slow, gentle easing
-   so it reads as a glide rather than a snap/pop. */
-.reveal{opacity:0;transform:translateY(38px) scale(.98);transition:opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1);will-change:opacity, transform;}
-.reveal.in{opacity:1;transform:translateY(0) scale(1);}
-@media (prefers-reduced-motion: reduce){
-  .reveal{opacity:1;transform:none;transition:none;}
-}
+/* Opacity/transform for .reveal elements are now driven directly, frame by
+   frame, by scroll.js's scroll position — not a fixed-duration CSS
+   transition triggered once at a threshold. That's what makes it track the
+   scroll itself (fast scroll = fast reveal, slow scroll = slow reveal)
+   instead of a timed pop that's out of sync with how fast you're actually
+   scrolling. No base opacity:0 rule here on purpose — if JS fails to load,
+   cards simply stay fully visible instead of getting stuck invisible.
+   will-change is applied only while actively animating (see scroll.js). */
 
 /* Every page's title + subtitle fade up on load — same treatment as the
    homepage hero, so Detect/Dashboard/Guidelines/About don't feel static
@@ -185,8 +210,6 @@ body{
 .section-title{text-align:center;margin:0 0 8px;font-size:1.8rem;}
 .section-sub{text-align:center;color:var(--text-dim);max-width:60ch;margin:0 auto 36px;}
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;}
-.feature-grid .card{transition:transform .2s, border-color .2s;}
-.feature-grid .card:hover{transform:translateY(-4px);border-color:rgba(56,224,122,.4);}
 .feature-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(56,224,122,.15);color:var(--accent);margin-bottom:14px;}
 .feature-icon svg{width:22px;height:22px;}
 .feature-grid h3{margin:0 0 8px;font-size:1.08rem;}

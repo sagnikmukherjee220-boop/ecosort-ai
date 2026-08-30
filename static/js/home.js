@@ -3,38 +3,14 @@
 // Purely decorative — never blocks or delays content, and backs off
 // entirely for prefers-reduced-motion.
 (() => {
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
   // ---------------- Scroll-in reveal for card groups ----------------
-  if (!reduceMotion && "IntersectionObserver" in window) {
-    const groups = [
-      document.querySelectorAll(".big-stat-grid > .big-stat"),
-      document.querySelectorAll(".compare-grid > .compare-row"),
-      document.querySelectorAll(".stat-strip > .card"),
-      document.querySelectorAll(".feature-grid > .card"),
-    ];
-    // A small negative bottom margin + low threshold means each card
-    // starts gliding in a little before it's fully on screen, so by the
-    // time it's actually in view the motion already reads as smooth
-    // rather than a sudden pop-in.
-    const revealIO = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in");
-            revealIO.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
-    );
-    groups.forEach((group) => {
-      group.forEach((el, i) => {
-        el.classList.add("reveal");
-        el.style.transitionDelay = `${i * 100}ms`;
-        revealIO.observe(el);
-      });
-    });
+  // Scroll-linked (via EcoReveal in scroll.js), not a fixed-duration
+  // transition — motion tracks the scroll itself instead of a timed pop.
+  if (window.EcoReveal) {
+    window.EcoReveal.bind(document.querySelectorAll(".big-stat-grid > .big-stat"), { stagger: 90 });
+    window.EcoReveal.bind(document.querySelectorAll(".compare-grid > .compare-row"), { stagger: 90 });
+    window.EcoReveal.bind(document.querySelectorAll(".stat-strip > .card"), { stagger: 90 });
+    window.EcoReveal.bind(document.querySelectorAll(".feature-grid > .card"), { stagger: 90 });
   }
 
   // ---------------- Count-up for the big crisis-stat numbers ----------------
