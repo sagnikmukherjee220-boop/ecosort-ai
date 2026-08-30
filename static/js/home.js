@@ -13,6 +13,10 @@
       document.querySelectorAll(".stat-strip > .card"),
       document.querySelectorAll(".feature-grid > .card"),
     ];
+    // A small negative bottom margin + low threshold means each card
+    // starts gliding in a little before it's fully on screen, so by the
+    // time it's actually in view the motion already reads as smooth
+    // rather than a sudden pop-in.
     const revealIO = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -22,12 +26,12 @@
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
     );
     groups.forEach((group) => {
       group.forEach((el, i) => {
         el.classList.add("reveal");
-        el.style.transitionDelay = `${i * 80}ms`;
+        el.style.transitionDelay = `${i * 100}ms`;
         revealIO.observe(el);
       });
     });

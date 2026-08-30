@@ -101,9 +101,10 @@ body{
 .hero{display:flex;align-items:center;gap:48px;padding:40px 0 60px;flex-wrap:wrap;}
 .hero-text{flex:1 1 460px;}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--accent);background:rgba(56,224,122,.12);border:1px solid rgba(56,224,122,.3);padding:6px 14px;border-radius:999px;font-size:.8rem;font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
-.hero h1{font-size:clamp(2.1rem, 4.2vw, 3.4rem);line-height:1.08;margin:18px 0 16px;}
-.hero h1 span{background:linear-gradient(135deg, var(--accent), var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
-.hero p{color:var(--text-dim);font-size:1.08rem;line-height:1.65;max-width:52ch;margin-bottom:28px;}
+.hero h1{font-size:clamp(2.2rem, 4.4vw, 3.6rem);line-height:1.08;margin:18px 0 16px;letter-spacing:-.01em;}
+.hero h1 span{background:linear-gradient(135deg, var(--accent), var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;animation:shine 5s ease-in-out infinite;}
+@keyframes shine{0%,100%{background-position:0% center;}50%{background-position:100% center;}}
+.hero p{color:var(--text-dim);font-size:1.14rem;line-height:1.7;max-width:50ch;margin-bottom:28px;padding-left:18px;border-left:3px solid var(--accent);background:linear-gradient(90deg, rgba(56,224,122,.08), transparent 70%);border-radius:0 8px 8px 0;padding-top:8px;padding-bottom:8px;}
 .hero-cta{display:flex;gap:14px;flex-wrap:wrap;}
 .hero-visual{flex:1 1 380px;display:flex;justify-content:center;}
 .scan-frame{position:relative;width:340px;height:340px;border-radius:24px;background:linear-gradient(160deg, rgba(56,224,122,.14), rgba(32,201,224,.08));border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
@@ -113,12 +114,27 @@ body{
 .scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg, transparent, var(--accent2), transparent);animation:scan 2.6s ease-in-out infinite;box-shadow:0 0 16px 2px var(--accent2);}
 @keyframes scan{0%{top:6%;}50%{top:92%;}100%{top:6%;}}
 
+/* Hero entrance — plays once on load, pure CSS so it never depends on JS
+   timing. Each child fades/glides up in sequence rather than all at once. */
+.hero-text > *, .hero-visual{opacity:0;transform:translateY(22px);animation:heroIn .9s cubic-bezier(.22,1,.36,1) forwards;}
+.hero-text .eyebrow{animation-delay:.05s;}
+.hero-text h1{animation-delay:.18s;}
+.hero-text p{animation-delay:.34s;}
+.hero-text .hero-cta{animation-delay:.5s;}
+.hero-visual{animation-delay:.3s;transform:translateY(14px) scale(.97);}
+@keyframes heroIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@media (prefers-reduced-motion: reduce){
+  .hero-text > *, .hero-visual{animation:none;opacity:1;transform:none;}
+  .hero h1 span{animation:none;}
+}
+
 /* ---------- Scroll-in reveal ---------- */
 /* Cards start slightly lower + transparent, then home.js flips them to
    .in (via IntersectionObserver) as they scroll into view, one after
-   another using each element's own transition-delay. */
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .6s cubic-bezier(.16,.8,.3,1), transform .6s cubic-bezier(.16,.8,.3,1);}
-.reveal.in{opacity:1;transform:translateY(0);}
+   another using each element's own transition-delay. Slow, gentle easing
+   so it reads as a glide rather than a snap/pop. */
+.reveal{opacity:0;transform:translateY(38px) scale(.98);transition:opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1);will-change:opacity, transform;}
+.reveal.in{opacity:1;transform:translateY(0) scale(1);}
 @media (prefers-reduced-motion: reduce){
   .reveal{opacity:1;transform:none;transition:none;}
 }
