@@ -139,6 +139,17 @@ body{
   .reveal{opacity:1;transform:none;transition:none;}
 }
 
+/* Every page's title + subtitle fade up on load — same treatment as the
+   homepage hero, so Detect/Dashboard/Guidelines/About don't feel static
+   the moment they open. Pure CSS, plays once, harmless if the element
+   happens to start below the fold (it's just already-settled by the
+   time it's scrolled to). */
+.section-title, .section-sub{opacity:0;transform:translateY(18px);animation:heroIn .8s cubic-bezier(.22,1,.36,1) forwards;}
+.section-sub{animation-delay:.12s;}
+@media (prefers-reduced-motion: reduce){
+  .section-title, .section-sub{animation:none;opacity:1;transform:none;}
+}
+
 /* ---------- Kicker section headers (crisis / compare) ---------- */
 .kicker-block{text-align:center;margin:64px 0 28px;}
 .kicker{display:inline-block;color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:10px;}
