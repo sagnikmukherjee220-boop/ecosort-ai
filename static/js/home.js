@@ -1,7 +1,39 @@
-// home.js — count-up animation for the big crisis-stat numbers on the
-// homepage. Numbers stay at 0 until their card actually scrolls into view,
-// then count up once. Purely decorative — never blocks or delays content.
+// home.js — homepage-only polish: cards flow/fade in as they're scrolled
+// into view, and the big crisis-stat numbers count up once visible.
+// Purely decorative — never blocks or delays content, and backs off
+// entirely for prefers-reduced-motion.
 (() => {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---------------- Scroll-in reveal for card groups ----------------
+  if (!reduceMotion && "IntersectionObserver" in window) {
+    const groups = [
+      document.querySelectorAll(".big-stat-grid > .big-stat"),
+      document.querySelectorAll(".compare-grid > .compare-row"),
+      document.querySelectorAll(".stat-strip > .card"),
+      document.querySelectorAll(".feature-grid > .card"),
+    ];
+    const revealIO = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            revealIO.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    groups.forEach((group) => {
+      group.forEach((el, i) => {
+        el.classList.add("reveal");
+        el.style.transitionDelay = `${i * 80}ms`;
+        revealIO.observe(el);
+      });
+    });
+  }
+
+  // ---------------- Count-up for the big crisis-stat numbers ----------------
   const nums = document.querySelectorAll(".big-num[data-count-to]");
   if (!nums.length) return;
 

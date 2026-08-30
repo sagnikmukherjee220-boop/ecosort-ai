@@ -113,6 +113,16 @@ body{
 .scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg, transparent, var(--accent2), transparent);animation:scan 2.6s ease-in-out infinite;box-shadow:0 0 16px 2px var(--accent2);}
 @keyframes scan{0%{top:6%;}50%{top:92%;}100%{top:6%;}}
 
+/* ---------- Scroll-in reveal ---------- */
+/* Cards start slightly lower + transparent, then home.js flips them to
+   .in (via IntersectionObserver) as they scroll into view, one after
+   another using each element's own transition-delay. */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .6s cubic-bezier(.16,.8,.3,1), transform .6s cubic-bezier(.16,.8,.3,1);}
+.reveal.in{opacity:1;transform:translateY(0);}
+@media (prefers-reduced-motion: reduce){
+  .reveal{opacity:1;transform:none;transition:none;}
+}
+
 /* ---------- Kicker section headers (crisis / compare) ---------- */
 .kicker-block{text-align:center;margin:64px 0 28px;}
 .kicker{display:inline-block;color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:10px;}
