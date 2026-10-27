@@ -103,19 +103,31 @@ def get_hf_client(provider):
 # (GEMINI_MODEL / GROQ_MODEL), e.g. if the default is retired.
 OPENAI_COMPAT_BACKENDS = [
     ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-     "GEMINI_API_KEY", "gemini-3.8-flash"),
+     "GEMINI_API_KEY", "gemini-3.8-flash", "minimal"),
     ("groq", "https://api.groq.com/openai/v1/chat/completions",
-     "GROQ_API_KEY", "qwen/qwen3.8-27b"),
+     "GROQ_API_KEY", "qwen/qwen3.8-27b", "none"),
 ]
+# These are "thinking" models; for a simple list-the-objects task, thinking
+# only adds latency, so ask for as little as possible. If a model rejects the
+# setting (HTTP 400) the call is retried without it.
 
 
-def call_openai_compat(url, key, model, messages):
-    resp = requests.post(
-        url, headers={"Authorization": f"Bearer {key}"},
-        json={"model": model, "messages": messages, "max_tokens": 800}, timeout=90)
-    if resp.status_code != 200:
-        raise RuntimeError(f"HTTP {resp.status_code} {resp.text[:200]}")
-    return resp.json()["choices"][0]["message"]["content"]
+def call_openai_compat(url, key, model, messages, reasoning=None):
+    body = {"model": model, "messages": messages, "max_tokens": 800}
+    for attempt in ((True, False) if reasoning else (False,)):
+        payload = dict(body, reasoning_effort=reasoning) if attempt else body
+        resp = requests.post(
+            url, headers={"Authorization": f"Bearer {key}"}, json=payload, timeout=40)
+        if resp.status_code == 400 and attempt:
+            continue
+        if resp.status_code != 200:
+            raise RuntimeError(f"HTTP {resp.status_code} {resp.text[:200]}")
+        return resp.json()["choices"][0]["message"]["content"]
+
+
+# When Hugging Face reports no credits, skip it for a while instead of making
+# every photo wait on three failing provider calls first.
+_hf_skip_until = 0.0
 
 
 def friendly_ai_error(errors):
@@ -219,7 +231,8 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
     }]
 
     raw, errors = None, []
-    if os.environ.get("HF_TOKEN"):
+    global _hf_skip_until
+    if os.environ.get("HF_TOKEN") and time.time() >= _hf_skip_until:
         for provider in VLM_PROVIDERS:
             try:
                 response = get_hf_client(provider).chat.completions.create(
@@ -229,15 +242,19 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             except Exception as e:  # noqa: BLE001 - any provider failure -> try the next one
                 app.logger.warning("detection via %s failed: %s: %s", provider, type(e).__name__, e)
                 errors.append(f"{provider}: {type(e).__name__} {e}")
+                if "402" in str(e) or "credit" in str(e).lower():
+                    _hf_skip_until = time.time() + 600
+                    break
     # Backups: any OpenAI-compatible vision API with a free tier. Only tried
     # when their key is set, and only after Hugging Face failed or is unset.
     if raw is None:
-        for name, url, key_env, model in OPENAI_COMPAT_BACKENDS:
+        for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
             key = os.environ.get(key_env)
             if not key:
                 continue
             try:
-                raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model), messages)
+                raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model),
+                                         messages, reasoning)
                 break
             except Exception as e:  # noqa: BLE001
                 app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
