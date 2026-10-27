@@ -103,9 +103,9 @@ def get_hf_client(provider):
 # (GEMINI_MODEL / GROQ_MODEL), e.g. if the default is retired.
 OPENAI_COMPAT_BACKENDS = [
     ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-     "GEMINI_API_KEY", "gemini-2.5-flash"),
+     "GEMINI_API_KEY", "gemini-3.8-flash"),
     ("groq", "https://api.groq.com/openai/v1/chat/completions",
-     "GROQ_API_KEY", "meta-llama/llama-4-scout-17b-16e-instruct"),
+     "GROQ_API_KEY", "qwen/qwen3.8-27b"),
 ]
 
 
