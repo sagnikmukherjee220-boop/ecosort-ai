@@ -81,19 +81,34 @@ def versioned_static(filename):
 # for the reasoning. Needs an HF_TOKEN env var (a Hugging Face access
 # token with "Make calls to Inference Providers" permission).
 # ----------------------------------------------------------------------
-_hf_client = None
+_hf_clients = {}
 VLM_MODEL = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-VLM_PROVIDER = "deepinfra"
+# Tried in order; if one provider errors or is down the next is used, so a
+# single provider outage doesn't take detection offline.
+VLM_PROVIDERS = ["deepinfra", "novita", "nscale"]
 
 
-def get_hf_client():
-    global _hf_client
-    if _hf_client is None:
+def get_hf_client(provider):
+    if provider not in _hf_clients:
         token = os.environ.get("HF_TOKEN")
         if not token:
             raise RuntimeError("HF_TOKEN environment variable is not set")
-        _hf_client = InferenceClient(api_key=token, provider=VLM_PROVIDER)
-    return _hf_client
+        _hf_clients[provider] = InferenceClient(api_key=token, provider=provider, timeout=90)
+    return _hf_clients[provider]
+
+
+def friendly_ai_error(errors):
+    """One plain-English line for the user, from the per-provider errors."""
+    text = " ".join(errors).lower()
+    if "hf_token" in text:
+        return "The AI service isn't configured on the server (missing access token)."
+    if "402" in text or "credit" in text or "payment" in text:
+        return "The AI service has used up its free credits. Please try again later."
+    if "429" in text or "rate" in text:
+        return "The AI service is busy right now. Please try again in a minute."
+    if "401" in text or "403" in text or "token" in text:
+        return "The AI service rejected the server's access token."
+    return "The AI service is not responding right now. Please try again in a moment."
 
 
 CONF_THRESHOLD_DEFAULT = 0.35
@@ -173,21 +188,27 @@ def build_prompt(conf_threshold: float, lang: str) -> str:
 
 
 def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_THRESHOLD_DEFAULT, lang="en"):
-    client = get_hf_client()
     prompt = build_prompt(conf_threshold, lang)
+    messages = [{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": {"url": image_data_uri}},
+        ],
+    }]
 
-    response = client.chat.completions.create(
-        model=VLM_MODEL,
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {"url": image_data_uri}},
-            ],
-        }],
-        max_tokens=800,
-    )
-    raw = response.choices[0].message.content.strip()
+    response, errors = None, []
+    for provider in VLM_PROVIDERS:
+        try:
+            response = get_hf_client(provider).chat.completions.create(
+                model=VLM_MODEL, messages=messages, max_tokens=800)
+            break
+        except Exception as e:  # noqa: BLE001 - any provider failure -> try the next one
+            app.logger.warning("detection via %s failed: %s: %s", provider, type(e).__name__, e)
+            errors.append(f"{provider}: {type(e).__name__} {e}")
+    if response is None:
+        raise RuntimeError(friendly_ai_error(errors))
+    raw = (response.choices[0].message.content or "").strip()
     # Models sometimes wrap JSON in ```json fences despite instructions not to.
     if raw.startswith("```"):
         raw = raw.strip("`")
@@ -332,7 +353,10 @@ def api_detect():
     try:
         detections = run_detection(image, image_data_uri, conf_threshold=conf, lang=lang)
     except RuntimeError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 503
+    except Exception:  # noqa: BLE001 - never leak a raw 500 page to the browser
+        app.logger.exception("unexpected error during detection")
+        return jsonify({"error": "Something went wrong while analysing the image. Please try again."}), 500
 
     # Log every real (non-ignored) waste detection for the dashboard/
     # gamification — but only for signed-in users. Guests get their results

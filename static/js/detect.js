@@ -224,7 +224,7 @@
       const data = await sendForDetection(dataUrl, source);
       renderDetections(data.detections, overlay.width, overlay.height);
     } catch (e) {
-      alert("Detection failed: " + e.message);
+      alert(e.message);
     }
     busy = false;
     loadingBtn.disabled = wasDisabled;
@@ -241,7 +241,12 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: dataUrl, source, lang }),
     });
-    if (!res.ok) throw new Error("server error " + res.status);
+    if (!res.ok) {
+      // The server sends {"error": "<plain-English reason>"}; fall back to the code.
+      let msg = "server error " + res.status;
+      try { const body = await res.json(); if (body && body.error) msg = body.error; } catch (_) {}
+      throw new Error(msg);
+    }
     return res.json();
   }
 
