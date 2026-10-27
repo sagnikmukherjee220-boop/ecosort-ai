@@ -17,7 +17,6 @@ import os
 import time
 
 import requests
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from authlib.integrations.flask_client import OAuth
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from huggingface_hub import InferenceClient
@@ -104,7 +103,7 @@ def get_hf_client(provider):
 # (GEMINI_MODEL / GROQ_MODEL), e.g. if the default is retired.
 OPENAI_COMPAT_BACKENDS = [
     ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-     "GEMINI_API_KEY", "gemini-3.8-flash", "minimal"),
+     "GEMINI_API_KEY", "gemini-3.8-flash", "low"),
     ("groq", "https://api.groq.com/openai/v1/chat/completions",
      "GROQ_API_KEY", "qwen/qwen3.8-27b", "none"),
 ]
@@ -153,7 +152,7 @@ LANG_NAMES = {
 }
 
 
-MAX_IMAGE_DIM = 1024  # longest side, in pixels
+MAX_IMAGE_DIM = 1280  # longest side, in pixels
 
 
 def decode_image(data_url_or_file):
@@ -249,25 +248,18 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
     # Backups: any OpenAI-compatible vision API with a free tier. Only tried
     # when their key is set, and only after Hugging Face failed or is unset.
     if raw is None:
-        # Raced in parallel: the first backend to answer wins, so one slow or
-        # hanging service can't hold up the response.
-        configured = [b for b in OPENAI_COMPAT_BACKENDS if os.environ.get(b[2])]
-        if configured:
-            pool = ThreadPoolExecutor(max_workers=len(configured))
-            futures = {
-                pool.submit(call_openai_compat, url, os.environ[key_env],
-                            os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model),
-                            messages, reasoning): name
-                for name, url, key_env, model, reasoning in configured}
-            for fut in as_completed(futures):
-                name = futures[fut]
-                try:
-                    raw = fut.result()
-                    break
-                except Exception as e:  # noqa: BLE001
-                    app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
-                    errors.append(f"{name}: {type(e).__name__} {e}")
-            pool.shutdown(wait=False, cancel_futures=True)
+        # In order of quality: Gemini first, Groq only if Gemini fails.
+        for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
+            key = os.environ.get(key_env)
+            if not key:
+                continue
+            try:
+                raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model),
+                                         messages, reasoning)
+                break
+            except Exception as e:  # noqa: BLE001
+                app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
+                errors.append(f"{name}: {type(e).__name__} {e}")
     if raw is None:
         if not errors:
             errors.append("hf_token missing")
