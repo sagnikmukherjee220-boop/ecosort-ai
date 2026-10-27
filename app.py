@@ -18,7 +18,7 @@ import time
 
 import requests
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from huggingface_hub import InferenceClient
 from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -238,6 +238,7 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
                 response = get_hf_client(provider).chat.completions.create(
                     model=VLM_MODEL, messages=messages, max_tokens=800)
                 raw = response.choices[0].message.content
+                g.engine = "Llama-4 Scout (Hugging Face)"
                 break
             except Exception as e:  # noqa: BLE001 - any provider failure -> try the next one
                 app.logger.warning("detection via %s failed: %s: %s", provider, type(e).__name__, e)
@@ -256,6 +257,7 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             try:
                 raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model),
                                          messages, reasoning)
+                g.engine = {"gemini": "Google Gemini", "groq": "Groq"}.get(name, name)
                 break
             except Exception as e:  # noqa: BLE001
                 app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
@@ -428,6 +430,7 @@ def api_detect():
         "detections": detections,
         "count": len(detections),
         "inference_ms": round((time.time() - t0) * 1000, 1),
+        "engine": getattr(g, "engine", None),
     })
 
 

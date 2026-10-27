@@ -220,10 +220,22 @@
     const wasDisabled = loadingBtn.disabled;
     loadingBtn.disabled = true;
     loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
+    const prevList = detList.innerHTML;
+    const prevCount = detCount.textContent;
+    const progress = startProgress();
     try {
       const data = await sendForDetection(dataUrl, source);
+      await progress.finish();
       renderDetections(data.detections, overlay.width, overlay.height);
+      const note = document.createElement("div");
+      note.className = "det-engine";
+      const secs = (progress.elapsed()).toFixed(1);
+      note.textContent = data.engine ? `Analysed by ${data.engine} in ${secs}s` : `Analysed in ${secs}s`;
+      detList.appendChild(note);
     } catch (e) {
+      progress.stop();
+      detList.innerHTML = prevList;
+      detCount.textContent = prevCount;
       alert(e.message);
     }
     busy = false;
@@ -232,6 +244,50 @@
     // Guard against the camera having been stopped while this request was
     // in flight — don't let a stale response re-enable a dead capture button.
     if (source === "webcam" && !stream) loadingBtn.disabled = true;
+  }
+
+  // Live progress shown in the results panel while the model works, so a
+  // slow scan reads as visible work rather than a frozen page. The first
+  // steps are timed (the upload is quick); the long wait is the model itself.
+  function startProgress() {
+    detCount.textContent = "…";
+    detList.innerHTML = `
+      <div class="progress" role="status" aria-live="polite">
+        <ol class="steps">
+          <li>Photo captured</li>
+          <li>Sending it securely to the AI model</li>
+          <li>Identifying every object in the scene</li>
+          <li>Sorting each object into its bin category</li>
+        </ol>
+        <div class="progress-hint"></div>
+        <div class="progress-time">0s</div>
+      </div>`;
+    const lis = detList.querySelectorAll(".steps li");
+    const hint = detList.querySelector(".progress-hint");
+    const timeEl = detList.querySelector(".progress-time");
+    const t0 = Date.now();
+    const elapsed = () => (Date.now() - t0) / 1000;
+    const setStep = (i) => lis.forEach((li, k) => { li.className = k < i ? "done" : k === i ? "active" : ""; });
+    setStep(1);
+    const toModel = setTimeout(() => setStep(2), 1200);
+    const tick = setInterval(() => {
+      const s = elapsed();
+      timeEl.textContent = Math.floor(s) + "s";
+      hint.textContent =
+        s > 35 ? "Almost there — thanks for your patience." :
+        s > 18 ? "Still working. A thorough scan can take up to 40 seconds." :
+        s > 6 ? "Busy scenes take a little longer — the model also checks small and background items." : "";
+    }, 500);
+    const clear = () => { clearTimeout(toModel); clearInterval(tick); };
+    return {
+      elapsed,
+      stop: clear,
+      finish() {
+        clear();
+        setStep(4);
+        return new Promise((r) => setTimeout(r, 500));
+      },
+    };
   }
 
   async function sendForDetection(dataUrl, source) {
