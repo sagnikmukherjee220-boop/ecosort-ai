@@ -230,3 +230,11 @@ table.history tbody tr:nth-child(even){background:rgba(255,255,255,.03);}
   content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(520px,70%);height:2px;
   background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent4),transparent);border-radius:2px;opacity:.7;
 }
+
+/* ---------- dashboard: big stat numbers + sensibly sized chart ---------- */
+.dash-grid > .card:not(.badge-card):not(.chart-card) .num{
+  font-size:2.3rem;font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg, rgb(var(--c)), #ffffff 170%);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.dash-grid > .card:not(.badge-card):not(.chart-card) .lbl{margin-top:6px;font-weight:600;color:var(--text-dim);}
+.chart-box{position:relative;height:300px;margin-top:6px;}

@@ -62,6 +62,8 @@
           datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }],
         },
         options: {
+          maintainAspectRatio: false,
+          cutout: "62%",
           plugins: {
             legend: { position: "bottom", labels: { color: "#eafff2" } },
           },
