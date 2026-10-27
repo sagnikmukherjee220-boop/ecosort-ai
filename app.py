@@ -16,6 +16,7 @@ import json
 import os
 import time
 
+import requests
 from authlib.integrations.flask_client import OAuth
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from huggingface_hub import InferenceClient
@@ -95,6 +96,26 @@ def get_hf_client(provider):
             raise RuntimeError("HF_TOKEN environment variable is not set")
         _hf_clients[provider] = InferenceClient(api_key=token, provider=provider, timeout=90)
     return _hf_clients[provider]
+
+
+# Backup vision backends, tried in order after Hugging Face. Each takes a key
+# from its env var; the model can be overridden with <NAME>_MODEL
+# (GEMINI_MODEL / GROQ_MODEL), e.g. if the default is retired.
+OPENAI_COMPAT_BACKENDS = [
+    ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+     "GEMINI_API_KEY", "gemini-2.5-flash"),
+    ("groq", "https://api.groq.com/openai/v1/chat/completions",
+     "GROQ_API_KEY", "meta-llama/llama-4-scout-17b-16e-instruct"),
+]
+
+
+def call_openai_compat(url, key, model, messages):
+    resp = requests.post(
+        url, headers={"Authorization": f"Bearer {key}"},
+        json={"model": model, "messages": messages, "max_tokens": 800}, timeout=90)
+    if resp.status_code != 200:
+        raise RuntimeError(f"HTTP {resp.status_code} {resp.text[:200]}")
+    return resp.json()["choices"][0]["message"]["content"]
 
 
 def friendly_ai_error(errors):
@@ -197,18 +218,35 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
         ],
     }]
 
-    response, errors = None, []
-    for provider in VLM_PROVIDERS:
-        try:
-            response = get_hf_client(provider).chat.completions.create(
-                model=VLM_MODEL, messages=messages, max_tokens=800)
-            break
-        except Exception as e:  # noqa: BLE001 - any provider failure -> try the next one
-            app.logger.warning("detection via %s failed: %s: %s", provider, type(e).__name__, e)
-            errors.append(f"{provider}: {type(e).__name__} {e}")
-    if response is None:
+    raw, errors = None, []
+    if os.environ.get("HF_TOKEN"):
+        for provider in VLM_PROVIDERS:
+            try:
+                response = get_hf_client(provider).chat.completions.create(
+                    model=VLM_MODEL, messages=messages, max_tokens=800)
+                raw = response.choices[0].message.content
+                break
+            except Exception as e:  # noqa: BLE001 - any provider failure -> try the next one
+                app.logger.warning("detection via %s failed: %s: %s", provider, type(e).__name__, e)
+                errors.append(f"{provider}: {type(e).__name__} {e}")
+    # Backups: any OpenAI-compatible vision API with a free tier. Only tried
+    # when their key is set, and only after Hugging Face failed or is unset.
+    if raw is None:
+        for name, url, key_env, model in OPENAI_COMPAT_BACKENDS:
+            key = os.environ.get(key_env)
+            if not key:
+                continue
+            try:
+                raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model), messages)
+                break
+            except Exception as e:  # noqa: BLE001
+                app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
+                errors.append(f"{name}: {type(e).__name__} {e}")
+    if raw is None:
+        if not errors:
+            errors.append("hf_token missing")
         raise RuntimeError(friendly_ai_error(errors))
-    raw = (response.choices[0].message.content or "").strip()
+    raw = (raw or "").strip()
     # Models sometimes wrap JSON in ```json fences despite instructions not to.
     if raw.startswith("```"):
         raw = raw.strip("`")
