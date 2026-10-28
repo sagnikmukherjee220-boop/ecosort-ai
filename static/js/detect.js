@@ -224,13 +224,16 @@
     const prevCount = detCount.textContent;
     const progress = startProgress();
     try {
-      const data = await sendForDetection(dataUrl, source);
+      const data = await sendForDetection(dataUrl, source, (t) => progress.addNote(t));
       await progress.finish();
       renderDetections(data.detections, overlay.width, overlay.height);
       const note = document.createElement("div");
       note.className = "det-engine";
       const secs = (progress.elapsed()).toFixed(1);
-      note.textContent = data.engine ? `Analysed by ${data.engine} in ${secs}s` : `Analysed in ${secs}s`;
+      note.textContent = (data.engine
+        ? tr("detect.analysed_by", "Analysed by {engine} in {secs}s")
+        : tr("detect.analysed_in", "Analysed in {secs}s")
+      ).replace("{engine}", data.engine || "").replace("{secs}", secs);
       detList.appendChild(note);
     } catch (e) {
       progress.stop();
@@ -246,53 +249,60 @@
     if (source === "webcam" && !stream) loadingBtn.disabled = true;
   }
 
-  // Live progress shown in the results panel while the model works, so a
-  // slow scan reads as visible work rather than a frozen page. The first
-  // steps are timed (the upload is quick); the long wait is the model itself.
+  // While the model works, its own running commentary (what it notices in
+  // the scene and how it decides each bin) is streamed into the results
+  // panel, so a slow scan reads as visible reasoning. The commentary is
+  // written by the model in the user's chosen language.
+  const tr = (key, fallback) => (window.I18N ? window.I18N.t(key, fallback) : fallback);
+
   function startProgress() {
     detCount.textContent = "…";
     detList.innerHTML = `
       <div class="progress" role="status" aria-live="polite">
-        <ol class="steps">
-          <li>Photo captured</li>
-          <li>Sending it securely to the AI model</li>
-          <li>Identifying every object in the scene</li>
-          <li>Sorting each object into its bin category</li>
-        </ol>
-        <div class="progress-hint"></div>
-        <div class="progress-time">0s</div>
+        <div class="progress-head">
+          <span class="progress-title"></span>
+          <span class="progress-time">0s</span>
+        </div>
+        <div class="narration"><div class="line wait"></div></div>
       </div>`;
-    const lis = detList.querySelectorAll(".steps li");
-    const hint = detList.querySelector(".progress-hint");
+    const title = detList.querySelector(".progress-title");
     const timeEl = detList.querySelector(".progress-time");
+    const box = detList.querySelector(".narration");
+    title.textContent = tr("detect.progress_title", "AI is analysing your photo");
+    box.firstChild.textContent = tr("detect.progress_wait", "Reading the image…");
+    let cur = null;
     const t0 = Date.now();
     const elapsed = () => (Date.now() - t0) / 1000;
-    const setStep = (i) => lis.forEach((li, k) => { li.className = k < i ? "done" : k === i ? "active" : ""; });
-    setStep(1);
-    const toModel = setTimeout(() => setStep(2), 1200);
-    const tick = setInterval(() => {
-      const s = elapsed();
-      timeEl.textContent = Math.floor(s) + "s";
-      hint.textContent =
-        s > 35 ? "Almost there — thanks for your patience." :
-        s > 18 ? "Still working. A thorough scan can take up to 40 seconds." :
-        s > 6 ? "Busy scenes take a little longer — the model also checks small and background items." : "";
-    }, 500);
-    const clear = () => { clearTimeout(toModel); clearInterval(tick); };
+    const tick = setInterval(() => { timeEl.textContent = Math.floor(elapsed()) + "s"; }, 500);
+    const newLine = () => {
+      if (cur) cur.classList.add("old");
+      cur = document.createElement("div");
+      cur.className = "line";
+      box.appendChild(cur);
+      box.scrollTop = box.scrollHeight;
+    };
     return {
       elapsed,
-      stop: clear,
+      stop: () => clearInterval(tick),
+      addNote(text) {
+        if (!cur) { box.innerHTML = ""; newLine(); }
+        text.split("\n").forEach((part, i) => {
+          if (i > 0) newLine();
+          cur.textContent += part;
+        });
+        box.scrollTop = box.scrollHeight;
+      },
       finish() {
-        clear();
-        setStep(4);
-        return new Promise((r) => setTimeout(r, 500));
+        clearInterval(tick);
+        if (cur) cur.classList.add("old");
+        return new Promise((r) => setTimeout(r, 700));
       },
     };
   }
 
-  async function sendForDetection(dataUrl, source) {
+  async function sendForDetection(dataUrl, source, onNote) {
     const lang = window.I18N ? window.I18N.lang : "en";
-    const res = await fetch(`/api/detect?conf=${currentConf}`, {
+    const res = await fetch(`/api/detect_stream?conf=${currentConf}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: dataUrl, source, lang }),
@@ -303,7 +313,29 @@
       try { const body = await res.json(); if (body && body.error) msg = body.error; } catch (_) {}
       throw new Error(msg);
     }
-    return res.json();
+    // Newline-delimited JSON events: note* then result (or error).
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let result = null;
+    const handle = (line) => {
+      if (!line.trim()) return;
+      const ev = JSON.parse(line);
+      if (ev.type === "note" && onNote) onNote(ev.text);
+      else if (ev.type === "result") result = ev;
+      else if (ev.type === "error") throw new Error(ev.error);
+    };
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      lines.forEach(handle);
+    }
+    handle(buf);
+    if (!result) throw new Error("The AI service ended the response early. Please try again.");
+    return result;
   }
 
   // ---------------- Translation helpers ----------------

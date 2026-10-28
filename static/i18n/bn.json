@@ -37,7 +37,11 @@
     "what_it_sorts": "এটি কী কী আলাদা করতে পারে:",
     "show_nonwaste": "অ-বর্জ্য বস্তুও দেখান",
     "waste_items": "বর্জ্য বস্তু",
-    "other_items": "বর্জ্য নয়"
+    "other_items": "বর্জ্য নয়",
+    "progress_title": "AI আপনার ছবি বিশ্লেষণ করছে",
+    "progress_wait": "ছবিটি পড়া হচ্ছে…",
+    "analysed_by": "{engine} দ্বারা {secs} সেকেন্ডে বিশ্লেষিত",
+    "analysed_in": "{secs} সেকেন্ডে বিশ্লেষিত"
   },
   "intro": {
     "skip": "এড়িয়ে যান",

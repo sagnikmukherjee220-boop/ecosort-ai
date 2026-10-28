@@ -37,7 +37,11 @@
     "what_it_sorts": "यह क्या छांट सकता है:",
     "show_nonwaste": "गैर-कचरा वस्तुएं भी दिखाएं",
     "waste_items": "कचरा वस्तुएं",
-    "other_items": "कचरा नहीं"
+    "other_items": "कचरा नहीं",
+    "progress_title": "AI आपकी फ़ोटो का विश्लेषण कर रहा है",
+    "progress_wait": "छवि पढ़ी जा रही है…",
+    "analysed_by": "{engine} द्वारा {secs} सेकंड में विश्लेषण",
+    "analysed_in": "{secs} सेकंड में विश्लेषण"
   },
   "intro": {
     "skip": "छोड़ें",

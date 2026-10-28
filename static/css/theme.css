@@ -239,16 +239,17 @@ table.history tbody tr:nth-child(even){background:rgba(255,255,255,.03);}
 .dash-grid > .card:not(.badge-card):not(.chart-card) .lbl{margin-top:6px;font-weight:600;color:var(--text-dim);}
 .chart-box{position:relative;height:300px;margin-top:6px;}
 
-/* Live progress while the model analyses a photo */
-.progress{padding:6px 2px;}
-.progress .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;}
-.progress .steps li{position:relative;padding-left:34px;color:var(--text-dim);opacity:.55;transition:opacity .3s,color .3s;}
-.progress .steps li::before{content:"";position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;border:2px solid rgb(255 255 255 / .25);box-sizing:border-box;}
-.progress .steps li.active{opacity:1;color:var(--text);font-weight:600;}
-.progress .steps li.active::before{border-color:var(--accent);border-top-color:transparent;animation:progSpin .8s linear infinite;}
-.progress .steps li.done{opacity:1;color:var(--text);}
-.progress .steps li.done::before{content:"\2713";display:flex;align-items:center;justify-content:center;background:var(--accent);border-color:var(--accent);color:#04140b;font-size:12px;font-weight:800;}
-.progress-hint{margin-top:16px;min-height:1.3em;font-size:.88rem;color:var(--text-dim);}
-.progress-time{margin-top:6px;font-size:.8rem;color:var(--text-dim);font-variant-numeric:tabular-nums;}
+/* Live commentary while the model analyses a photo */
+.progress{padding:2px;}
+.progress-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;font-weight:700;}
+.progress-title{display:flex;align-items:center;gap:10px;color:var(--text);}
+.progress-title::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);border-top-color:transparent;animation:progSpin .8s linear infinite;flex:none;}
+.progress-time{font-size:.8rem;font-weight:500;color:var(--text-dim);font-variant-numeric:tabular-nums;}
+.narration{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding-right:4px;scrollbar-width:thin;}
+.narration .line{color:var(--text);font-size:.93rem;line-height:1.5;animation:lineIn .6s ease both;transition:opacity .5s,color .5s;}
+.narration .line.old{opacity:.6;color:var(--text-dim);}
+.narration .line.wait{color:var(--text-dim);animation:lineIn .6s ease both,pulse 1.6s ease-in-out infinite .6s;}
 .det-engine{margin-top:12px;font-size:.78rem;color:var(--text-dim);text-align:right;}
 @keyframes progSpin{to{transform:rotate(360deg);}}
+@keyframes lineIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+@keyframes pulse{50%{opacity:.45;}}

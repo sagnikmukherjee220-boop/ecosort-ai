@@ -37,7 +37,11 @@
     "what_it_sorts": "हे काय वेगळे करू शकते:",
     "show_nonwaste": "कचरा नसलेल्या वस्तूही दाखवा",
     "waste_items": "कचरा वस्तू",
-    "other_items": "कचरा नाही"
+    "other_items": "कचरा नाही",
+    "progress_title": "AI तुमच्या फोटोचे विश्लेषण करत आहे",
+    "progress_wait": "प्रतिमा वाचली जात आहे…",
+    "analysed_by": "{engine} द्वारे {secs} सेकंदात विश्लेषण",
+    "analysed_in": "{secs} सेकंदात विश्लेषण"
   },
   "intro": {
     "skip": "वगळा",

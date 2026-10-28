@@ -37,7 +37,11 @@
     "what_it_sorts": "What it can sort:",
     "show_nonwaste": "Also show non-waste objects",
     "waste_items": "Waste Items",
-    "other_items": "Not Waste"
+    "other_items": "Not Waste",
+    "progress_title": "AI is analysing your photo",
+    "progress_wait": "Reading the image…",
+    "analysed_by": "Analysed by {engine} in {secs}s",
+    "analysed_in": "Analysed in {secs}s"
   },
   "intro": {
     "skip": "Skip",

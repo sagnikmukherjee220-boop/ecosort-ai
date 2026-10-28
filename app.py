@@ -12,13 +12,15 @@ See README.md for full setup instructions.
 """
 import base64
 import io
+import itertools
 import json
 import os
 import time
 
 import requests
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
+from flask import (Flask, render_template, request, jsonify, url_for, session, redirect, g,
+                   Response, stream_with_context)
 from huggingface_hub import InferenceClient
 from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -181,7 +183,10 @@ def decode_image(data_url_or_file):
     return img, data_uri
 
 
-def build_prompt(conf_threshold: float, lang: str) -> str:
+NARRATION_MARK = "###JSON"
+
+
+def build_prompt(conf_threshold: float, lang: str, narrate: bool = False) -> str:
     if conf_threshold >= 0.45:
         inclusiveness = "Only list objects you can identify with high confidence."
     elif conf_threshold <= 0.25:
@@ -214,9 +219,17 @@ def build_prompt(conf_threshold: float, lang: str) -> str:
         "vehicles, furniture, walls, curtains, floors, and other fixed "
         "room/background elements).\n"
         "Also give a confidence score from 0 to 1 for your own identification.\n"
-        'Respond with ONLY a JSON array, no other text, no markdown fences, '
-        'where each item is exactly: '
-        '{"label": "object name", "category": "category key", "confidence": 0.0}'
+        + (
+            f"First, think out loud in {lang_name}: write 4 to 8 short lines, each starting "
+            "with '• ', narrating what you notice — the overall scene, where things are, "
+            "materials, small or partly hidden items, and why each item belongs in the "
+            f"category you choose. Then write a line containing exactly {NARRATION_MARK} and, "
+            "after it, ONLY a JSON array (no markdown fences) where each item is exactly: "
+            if narrate else
+            'Respond with ONLY a JSON array, no other text, no markdown fences, '
+            'where each item is exactly: '
+        )
+        + '{"label": "object name", "category": "category key", "confidence": 0.0}'
     )
 
 
@@ -266,6 +279,11 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
         if not errors:
             errors.append("hf_token missing")
         raise RuntimeError(friendly_ai_error(errors))
+    return detections_from_raw(raw)
+
+
+def detections_from_raw(raw):
+    """Turn the model's JSON text into the list of detection dicts."""
     raw = (raw or "").strip()
     # Models sometimes wrap JSON in ```json fences despite instructions not to.
     if raw.startswith("```"):
@@ -300,6 +318,76 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             "points": meta["points"],
         })
     return detections
+
+
+def _stream_hf(provider, messages):
+    stream = get_hf_client(provider).chat.completions.create(
+        model=VLM_MODEL, messages=messages, max_tokens=1200, stream=True)
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
+
+
+def _stream_openai_compat(url, key, model, messages, reasoning=None):
+    body = {"model": model, "messages": messages, "max_tokens": 1200, "stream": True}
+    for attempt in ((True, False) if reasoning else (False,)):
+        payload = dict(body, reasoning_effort=reasoning) if attempt else body
+        resp = requests.post(url, headers={"Authorization": f"Bearer {key}"},
+                             json=payload, timeout=40, stream=True)
+        if resp.status_code == 400 and attempt:
+            resp.close()
+            continue
+        if resp.status_code != 200:
+            raise RuntimeError(f"HTTP {resp.status_code} {resp.text[:200]}")
+        break
+    resp.encoding = "utf-8"
+    for line in resp.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            return
+        try:
+            delta = json.loads(data)["choices"][0]["delta"].get("content")
+        except (KeyError, IndexError, ValueError):
+            continue
+        if delta:
+            yield delta
+
+
+def open_stream(messages):
+    """Try each backend in turn until one starts streaming text. Returns
+    (engine name, iterator of text pieces); the first piece is already pulled
+    so a backend that fails immediately falls through to the next one."""
+    global _hf_skip_until
+    errors = []
+    attempts = []
+    if os.environ.get("HF_TOKEN") and time.time() >= _hf_skip_until:
+        attempts += [("Llama-4 Scout (Hugging Face)", p, lambda p=p: _stream_hf(p, messages))
+                     for p in VLM_PROVIDERS]
+    for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
+        key = os.environ.get(key_env)
+        if key:
+            m = os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model)
+            attempts.append(({"gemini": "Google Gemini", "groq": "Groq"}.get(name, name), name,
+                             lambda u=url, k=key, m=m, r=reasoning: _stream_openai_compat(u, k, m, messages, r)))
+    hf_dead = False
+    for engine, tag, make in attempts:
+        if hf_dead and tag in VLM_PROVIDERS:
+            continue
+        try:
+            it = make()
+            first = next(it)
+            return engine, itertools.chain([first], it)
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning("streamed detection via %s failed: %s: %s", tag, type(e).__name__, e)
+            errors.append(f"{tag}: {type(e).__name__} {e}")
+            if tag in VLM_PROVIDERS and ("402" in str(e) or "credit" in str(e).lower()):
+                _hf_skip_until = time.time() + 600
+                hf_dead = True
+    if not errors:
+        errors.append("hf_token missing")
+    raise RuntimeError(friendly_ai_error(errors))
 
 
 # ------------------------------- PAGES ---------------------------------
@@ -420,11 +508,7 @@ def api_detect():
     # gamification — but only for signed-in users. Guests get their results
     # shown on screen same as anyone else, just never written anywhere, so
     # a guest visit leaves no trace and starts fresh again next time.
-    user_id = current_user_id()
-    if user_id:
-        for d in detections:
-            if d["category"] != "ignore":
-                db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source, user_id)
+    log_user_detections(detections, source, current_user_id())
 
     return jsonify({
         "detections": detections,
@@ -432,6 +516,71 @@ def api_detect():
         "inference_ms": round((time.time() - t0) * 1000, 1),
         "engine": getattr(g, "engine", None),
     })
+
+
+def log_user_detections(detections, source, user_id):
+    if user_id:
+        for d in detections:
+            if d["category"] != "ignore":
+                db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source, user_id)
+
+
+@app.route("/api/detect_stream", methods=["POST"])
+def api_detect_stream():
+    """Same job as /api/detect, but streams newline-delimited JSON events:
+    {"type":"engine"}, a series of {"type":"note"} with the model's running
+    commentary (in the user's language), then one {"type":"result"} (or
+    {"type":"error"}). The commentary comes from the same single model call."""
+    t0 = time.time()
+    payload = request.get_json(silent=True) or {}
+    if "image" not in payload:
+        return jsonify({"error": "no image provided"}), 400
+    image, image_data_uri = decode_image(payload["image"])
+    source = payload.get("source", "webcam")
+    lang = payload.get("lang", "en")
+    conf = float(request.args.get("conf", CONF_THRESHOLD_DEFAULT))
+    user_id = current_user_id()
+    messages = [{"role": "user", "content": [
+        {"type": "text", "text": build_prompt(conf, lang, narrate=True)},
+        {"type": "image_url", "image_url": {"url": image_data_uri}}]}]
+
+    def event(**kw):
+        return json.dumps(kw, ensure_ascii=False) + "\n"
+
+    def gen():
+        try:
+            engine, pieces = open_stream(messages)
+        except RuntimeError as e:
+            yield event(type="error", error=str(e))
+            return
+        except Exception:  # noqa: BLE001
+            app.logger.exception("unexpected error starting detection stream")
+            yield event(type="error", error="Something went wrong while analysing the image. Please try again.")
+            return
+        yield event(type="engine", engine=engine)
+        buf, sent, found = "", 0, -1
+        try:
+            for piece in pieces:
+                buf += piece
+                if found < 0:
+                    found = buf.find(NARRATION_MARK)
+                    # Hold back a possible partial marker at the end of the buffer.
+                    limit = found if found >= 0 else len(buf) - (len(NARRATION_MARK) - 1)
+                    if limit > sent:
+                        yield event(type="note", text=buf[sent:limit])
+                        sent = limit
+        except Exception as e:  # noqa: BLE001 - a mid-stream drop: use whatever arrived
+            app.logger.warning("detection stream interrupted: %s: %s", type(e).__name__, e)
+        raw = buf[found + len(NARRATION_MARK):] if found >= 0 else buf
+        if found < 0 and sent < len(buf):
+            yield event(type="note", text=buf[sent:])
+        detections = detections_from_raw(raw)
+        log_user_detections(detections, source, user_id)
+        yield event(type="result", detections=detections, count=len(detections), engine=engine,
+                    inference_ms=round((time.time() - t0) * 1000, 1))
+
+    return Response(stream_with_context(gen()), mimetype="application/x-ndjson",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.route("/api/stats")
