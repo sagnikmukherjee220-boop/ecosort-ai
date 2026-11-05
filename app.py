@@ -11,6 +11,7 @@ expose it yourself with localtunnel (you stay in full control):
 See README.md for full setup instructions.
 """
 import base64
+import datetime
 import io
 import itertools
 import json
@@ -437,7 +438,8 @@ def about_page():
 @app.route("/certificate")
 def certificate_page():
     stats = db.get_stats(current_user_id())
-    return render_template("certificate.html", stats=stats)
+    today = datetime.date.today().strftime("%d %B %Y")
+    return render_template("certificate.html", stats=stats, today=today)
 
 
 def current_user_id():
