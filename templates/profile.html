@@ -2,7 +2,7 @@
 {% block content %}
 <section class="profile-card">
   <div class="profile-head">
-    <div class="profile-avatar">{{ (current_user.name or '?')[:1]|upper }}</div>
+    <div class="profile-avatar">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" referrerpolicy="no-referrer">{% else %}{{ (current_user.name or '?')[:1]|upper }}{% endif %}</div>
     <div>
       <h1>{{ current_user.name }}</h1>
       <p>{{ current_user.email }}</p>
