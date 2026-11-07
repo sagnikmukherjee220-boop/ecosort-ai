@@ -390,3 +390,5 @@ code.kbd{background:var(--surface);border:1px solid var(--border);padding:2px 8p
 .profile-stats span{font-size:.8rem;color:var(--text-dim);}
 .profile-badge{display:inline-block;margin-bottom:22px;padding:6px 14px;border-radius:999px;background:rgba(56,224,122,.12);border:1px solid rgba(56,224,122,.3);color:var(--accent);font-weight:600;font-size:.85rem;}
 .profile-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.profile-pref{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:22px;border:1px solid var(--border);border-radius:16px;background:var(--surface);}
+.profile-pref label{font-size:.92rem;color:var(--text-dim);}

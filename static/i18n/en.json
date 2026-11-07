@@ -12,7 +12,8 @@
     "about": "About",
     "signin": "Sign in",
     "logout": "Log out",
-    "profile": "View profile"
+    "profile": "View profile",
+    "language_pref": "Language preference"
   },
   "common": {
     "footer": "EcoSort AI · Built with Flask & a vision-language model",

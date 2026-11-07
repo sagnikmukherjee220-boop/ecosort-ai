@@ -12,7 +12,8 @@
     "about": "आमच्याविषयी",
     "signin": "साइन इन करा",
     "logout": "लॉग आउट",
-    "profile": "प्रोफाइल पहा"
+    "profile": "प्रोफाइल पहा",
+    "language_pref": "भाषा प्राधान्य"
   },
   "common": {
     "footer": "EcoSort AI · Flask आणि व्हिजन-लँग्वेज मॉडेल वापरून तयार",

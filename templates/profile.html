@@ -14,6 +14,10 @@
     <div><b>{{ stats.total_items }}</b><span>Items sorted</span></div>
     <div><b>{{ stats.streak }}</b><span>Day streak</span></div>
   </div>
+  <div class="profile-pref">
+    <label for="profileLang" data-i18n="nav.language_pref">Language preference</label>
+    <select class="lang-select" id="profileLang"></select>
+  </div>
   <div class="profile-actions">
     <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard_page') }}">Open dashboard</a>
     <a class="btn btn-ghost btn-sm" href="{{ url_for('certificate_page') }}">My certificate</a>
