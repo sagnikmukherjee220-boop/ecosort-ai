@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="profile-card">
+  <div class="profile-head">
+    <div class="profile-avatar">{{ (current_user.name or '?')[:1]|upper }}</div>
+    <div>
+      <h1>{{ current_user.name }}</h1>
+      <p>{{ current_user.email }}</p>
+    </div>
+  </div>
+  <span class="profile-badge">{{ stats.badge }}</span>
+  <div class="profile-stats">
+    <div><b>{{ stats.total_points }}</b><span>Eco points</span></div>
+    <div><b>{{ stats.total_items }}</b><span>Items sorted</span></div>
+    <div><b>{{ stats.streak }}</b><span>Day streak</span></div>
+  </div>
+  <div class="profile-actions">
+    <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard_page') }}">Open dashboard</a>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('certificate_page') }}">My certificate</a>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('auth_logout') }}" data-i18n="nav.logout">Log out</a>
+  </div>
+</section>
+{% endblock %}

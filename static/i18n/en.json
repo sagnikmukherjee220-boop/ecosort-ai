@@ -11,7 +11,8 @@
     "chatbot": "EcoBot",
     "about": "About",
     "signin": "Sign in",
-    "logout": "Log out"
+    "logout": "Log out",
+    "profile": "View profile"
   },
   "common": {
     "footer": "EcoSort AI · Built with Flask & a vision-language model",

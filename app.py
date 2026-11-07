@@ -435,6 +435,13 @@ def about_page():
     return render_template("about.html")
 
 
+@app.route("/profile")
+def profile_page():
+    if not session.get("user"):
+        return redirect(url_for("auth_login_google"))
+    return render_template("profile.html", stats=db.get_stats(current_user_id()))
+
+
 @app.route("/certificate")
 def certificate_page():
     stats = db.get_stats(current_user_id())

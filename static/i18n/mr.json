@@ -11,7 +11,8 @@
     "chatbot": "इकोबॉट",
     "about": "आमच्याविषयी",
     "signin": "साइन इन करा",
-    "logout": "लॉग आउट"
+    "logout": "लॉग आउट",
+    "profile": "प्रोफाइल पहा"
   },
   "common": {
     "footer": "EcoSort AI · Flask आणि व्हिजन-लँग्वेज मॉडेल वापरून तयार",

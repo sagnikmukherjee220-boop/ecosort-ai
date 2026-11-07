@@ -46,10 +46,16 @@
     </li>
     <li class="nav-auth">
       {% if current_user %}
-        <div class="user-chip">
-          {% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" referrerpolicy="no-referrer">{% endif %}
-          <span>{{ current_user.name }}</span>
-          <a href="{{ url_for('auth_logout') }}" class="btn btn-ghost btn-sm" data-i18n="nav.logout">Log out</a>
+        <div class="user-menu" id="userMenu">
+          <button type="button" class="user-avatar" id="userMenuBtn" aria-haspopup="true" aria-expanded="false" aria-label="{{ current_user.name }}">{{ (current_user.name or '?')[:1]|upper }}</button>
+          <div class="user-dropdown" id="userDropdown" role="menu">
+            <div class="user-dropdown-head">
+              <strong>{{ current_user.name }}</strong>
+              <small>{{ current_user.email }}</small>
+            </div>
+            <a href="{{ url_for('profile_page') }}" role="menuitem" data-i18n="nav.profile">View profile</a>
+            <a href="{{ url_for('auth_logout') }}" role="menuitem" class="danger" data-i18n="nav.logout">Log out</a>
+          </div>
         </div>
       {% else %}
         <a href="{{ url_for('auth_login_google') }}" class="btn btn-ghost btn-sm" data-i18n="nav.signin">Sign in</a>
