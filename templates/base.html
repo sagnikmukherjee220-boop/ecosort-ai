@@ -41,9 +41,11 @@
     <li><a href="{{ url_for('about_page') }}" class="{{ 'active' if request.path=='/about' else '' }}">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 11v6M12 7.5v.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <span data-i18n="nav.about">About</span></a></li>
+    {% if not current_user %}
     <li class="nav-lang">
       <select class="lang-select" aria-label="Language / भाषा"></select>
     </li>
+    {% endif %}
     <li class="nav-auth">
       {% if current_user %}
         <div class="user-menu" id="userMenu">
@@ -54,6 +56,10 @@
               <small>{{ current_user.email }}</small>
             </div>
             <a href="{{ url_for('profile_page') }}" role="menuitem" data-i18n="nav.profile">View profile</a>
+            <div class="user-dropdown-lang">
+              <label for="menuLang" data-i18n="nav.language_pref">Language preference</label>
+              <select class="lang-select" id="menuLang" aria-label="Language / भाषा"></select>
+            </div>
             <a href="{{ url_for('auth_logout') }}" role="menuitem" class="danger" data-i18n="nav.logout">Log out</a>
           </div>
         </div>

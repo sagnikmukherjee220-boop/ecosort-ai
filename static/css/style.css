@@ -392,3 +392,6 @@ code.kbd{background:var(--surface);border:1px solid var(--border);padding:2px 8p
 .profile-actions{display:flex;gap:10px;flex-wrap:wrap;}
 .profile-pref{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:22px;border:1px solid var(--border);border-radius:16px;background:var(--surface);}
 .profile-pref label{font-size:.92rem;color:var(--text-dim);}
+.user-dropdown-lang{padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:4px 0;}
+.user-dropdown-lang label{font-size:.74rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;}
+.user-dropdown-lang .lang-select{width:100%;}
