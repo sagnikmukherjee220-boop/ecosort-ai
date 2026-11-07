@@ -14,9 +14,25 @@
     <div><b>{{ stats.total_items }}</b><span>Items sorted</span></div>
     <div><b>{{ stats.streak }}</b><span>Day streak</span></div>
   </div>
+  <h2 class="profile-h2">Month-wise history</h2>
+  {% if months %}
+  <div class="month-list">
+    {% for m in months %}
+    <div class="month-row">
+      <div class="month-name">{{ m.label }}<small>{{ m.days_active }} active day{{ '' if m.days_active == 1 else 's' }}</small></div>
+      <div class="month-nums"><b>{{ m.items }}</b><span>items</span></div>
+      <div class="month-nums"><b>{{ m.points }}</b><span>points</span></div>
+      <div class="month-top"><span>Most sorted</span>{{ m.top }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="profile-empty">No detections yet — sort your first item on the Detect page and it will show up here.</p>
+  {% endif %}
   <div class="profile-actions">
     <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard_page') }}">Open dashboard</a>
     <a class="btn btn-ghost btn-sm" href="{{ url_for('certificate_page') }}">My certificate</a>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('api_history_export') }}">Download my history (CSV)</a>
     <a class="btn btn-ghost btn-sm" href="{{ url_for('auth_logout') }}" data-i18n="nav.logout">Log out</a>
   </div>
 </section>

@@ -439,7 +439,12 @@ def about_page():
 def profile_page():
     if not session.get("user"):
         return redirect(url_for("auth_login_google"))
-    return render_template("profile.html", stats=db.get_stats(current_user_id()))
+    uid = current_user_id()
+    months = db.get_monthly(uid)
+    for m in months:
+        m["label"] = datetime.datetime.strptime(m["month"], "%Y-%m").strftime("%B %Y")
+        m["top"] = max(m["by_category"], key=m["by_category"].get).replace("_", " ").title() if m["by_category"] else "-"
+    return render_template("profile.html", stats=db.get_stats(uid), months=months)
 
 
 @app.route("/certificate")
@@ -590,6 +595,28 @@ def api_detect_stream():
 
     return Response(stream_with_context(gen()), mimetype="application/x-ndjson",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.route("/api/history/export")
+def api_history_export():
+    """CSV backup of the signed-in user's full detection history."""
+    uid = current_user_id()
+    if uid is None:
+        return redirect(url_for("auth_login_google"))
+    import csv, io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["date_time", "item", "category", "confidence", "points", "source"])
+    for r in db.export_rows(uid):
+        w.writerow([r["ts"], r["coco_label"], r["category"], round(r["confidence"], 3), r["points"], r["source"]])
+    name = (session.get("user", {}).get("name") or "history").replace(" ", "_")
+    return Response("﻿" + buf.getvalue(), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="ecosort_history_{name}.csv"'})
+
+
+@app.route("/api/history/monthly")
+def api_history_monthly():
+    return jsonify(db.get_monthly(current_user_id()))
 
 
 @app.route("/api/stats")

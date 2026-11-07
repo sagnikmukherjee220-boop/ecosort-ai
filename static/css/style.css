@@ -398,3 +398,13 @@ code.kbd{background:var(--surface);border:1px solid var(--border);padding:2px 8p
 .user-avatar{overflow:hidden;padding:0;}
 .user-avatar img,.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
 .profile-avatar{overflow:hidden;}
+.profile-h2{font-size:1.05rem;margin:0 0 12px;}
+.month-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+.month-row{display:grid;grid-template-columns:1.4fr .6fr .6fr 1fr;gap:12px;align-items:center;padding:12px 16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);}
+.month-name{font-weight:600;}
+.month-name small{display:block;font-weight:400;font-size:.75rem;color:var(--text-dim);}
+.month-nums b{display:block;color:var(--accent);font-size:1.1rem;}
+.month-nums span,.month-top span{display:block;font-size:.72rem;color:var(--text-dim);}
+.month-top{font-size:.9rem;}
+.profile-empty{color:var(--text-dim);font-size:.92rem;margin:0 0 24px;}
+@media (max-width:560px){.month-row{grid-template-columns:1fr 1fr;}}

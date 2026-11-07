@@ -11,26 +11,59 @@ import sqlite3
 import datetime
 import os
 
+# Persistence: if DATABASE_URL is set (e.g. a free Neon Postgres connection
+# string on Render) everything is stored there and survives redeploys.
+# Otherwise it falls back to a local SQLite file (fine for local dev, but on
+# Render's free plan that file is wiped on every redeploy/restart).
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+USE_PG = DATABASE_URL.startswith(("postgres://", "postgresql://"))
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "waste.db")
 
 
+class _Conn:
+    """Tiny wrapper so the rest of the module can write one style of SQL
+    ('?' placeholders, dict-like rows) for both SQLite and Postgres."""
+
+    def __init__(self):
+        if USE_PG:
+            import psycopg2
+            import psycopg2.extras
+            self.raw = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+            self._cur = lambda: self.raw.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        else:
+            os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+            self.raw = sqlite3.connect(DB_PATH)
+            self.raw.row_factory = sqlite3.Row
+            self._cur = lambda: self.raw.cursor()
+
+    def execute(self, sql, params=()):
+        cur = self._cur()
+        cur.execute(sql.replace("?", "%s") if USE_PG else sql, params)
+        return cur
+
+    def commit(self):
+        self.raw.commit()
+
+    def close(self):
+        self.raw.close()
+
+
 def get_conn():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _Conn()
 
 
 def init_db():
     conn = get_conn()
+    pk = "SERIAL PRIMARY KEY" if USE_PG else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    real = "DOUBLE PRECISION" if USE_PG else "REAL"
     conn.execute(
-        """
+        f"""
         CREATE TABLE IF NOT EXISTS detections (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk},
             ts TEXT NOT NULL,
             coco_label TEXT NOT NULL,
             category TEXT NOT NULL,
-            confidence REAL NOT NULL,
+            confidence {real} NOT NULL,
             points INTEGER NOT NULL,
             source TEXT NOT NULL,
             user_id INTEGER
@@ -38,9 +71,9 @@ def init_db():
         """
     )
     conn.execute(
-        """
+        f"""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk},
             google_sub TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -49,13 +82,16 @@ def init_db():
         )
         """
     )
-    # Lightweight migration for a pre-existing local instance/waste.db that
-    # predates the user_id column — safe to ignore if it's already there
-    # (fresh deploys on Render never hit this since storage is ephemeral).
-    try:
-        conn.execute("ALTER TABLE detections ADD COLUMN user_id INTEGER")
-    except sqlite3.OperationalError:
-        pass
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_det_user_ts ON detections (user_id, ts)")
+    if USE_PG:
+        conn.execute("ALTER TABLE detections ADD COLUMN IF NOT EXISTS user_id INTEGER")
+    else:
+        # Lightweight migration for an old local instance/waste.db that
+        # predates the user_id column — safe to ignore if already there.
+        try:
+            conn.execute("ALTER TABLE detections ADD COLUMN user_id INTEGER")
+        except sqlite3.OperationalError:
+            pass
     conn.commit()
     conn.close()
 
@@ -173,3 +209,43 @@ def clear_history(user_id=None):
     conn.execute("DELETE FROM detections WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+
+def get_monthly(user_id=None):
+    """Month-by-month history for one signed-in user, newest month first:
+    [{"month": "2026-11", "items": n, "points": n, "days_active": n,
+      "by_category": {...}}]. Guests have nothing stored, so get nothing."""
+    if user_id is None:
+        return []
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT ts, category, points FROM detections WHERE user_id = ? ORDER BY ts", (user_id,)
+    ).fetchall()
+    conn.close()
+    months = {}
+    for r in rows:
+        m = months.setdefault(r["ts"][:7], {"month": r["ts"][:7], "items": 0, "points": 0,
+                                            "days": set(), "by_category": {}})
+        m["items"] += 1
+        m["points"] += r["points"]
+        m["days"].add(r["ts"][:10])
+        m["by_category"][r["category"]] = m["by_category"].get(r["category"], 0) + 1
+    out = []
+    for key in sorted(months, reverse=True):
+        m = months[key]
+        m["days_active"] = len(m.pop("days"))
+        out.append(m)
+    return out
+
+
+def export_rows(user_id=None):
+    """Every stored detection for one user, oldest first (for the CSV backup)."""
+    if user_id is None:
+        return []
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT ts, coco_label, category, confidence, points, source "
+        "FROM detections WHERE user_id = ? ORDER BY ts", (user_id,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
