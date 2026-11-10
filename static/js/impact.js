@@ -46,6 +46,7 @@
   tab.addEventListener("click", function () { set(!panel.classList.contains("open")); });
   document.getElementById("impactClose").addEventListener("click", function () { set(false); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
+  document.addEventListener("click", function (e) { if (panel.classList.contains("open") && !panel.contains(e.target) && !tab.contains(e.target)) set(false); });
   document.addEventListener("i18n:change", function () { if (last) render(last); });
   document.addEventListener("ecosort:detected", function () { if (panel.classList.contains("open")) load(); });
 })();
