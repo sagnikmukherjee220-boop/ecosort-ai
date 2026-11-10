@@ -127,8 +127,8 @@
   },
   "dashboard": {
     "title": "Your Impact Dashboard",
-    "subtitle": "Signed-in accounts keep their eco-points and history saved across visits; browsing as a guest keeps nothing.",
-    "guest_banner": "You're browsing as a guest — nothing you scan today is being saved.",
+    "subtitle": "Signed-in accounts keep their eco-points and history saved across visits; guests are only counted anonymously in the community tracker.",
+    "guest_banner": "You're browsing as a guest — your scans count toward the community Impact tracker, but without your name or history.",
     "guest_signin": "Sign in with Google",
     "guest_banner2": "to keep your eco-points, streaks and history across visits.",
     "current_badge": "Current Badge",
@@ -180,7 +180,7 @@
     "d3_title": "Works anywhere",
     "d3_text": "A real, permanent website — reachable from any phone or laptop, any time, with nothing to install.",
     "privacy_title": "Your privacy, plainly",
-    "privacy_text": "Sign in to keep your eco-points and history saved across visits. Browsing as a guest? Nothing is saved — ever."
+    "privacy_text": "Sign in to keep your eco-points and history saved across visits. Browsing as a guest? Your name and details are never saved — only an anonymous tally of what was sorted (category and time) feeds the community Impact tracker."
   },
   "guidelines_content": {
     "biodegradable": {
@@ -360,5 +360,21 @@
     "hair drier": "Hair Dryer",
     "clock": "Clock",
     "refrigerator": "Refrigerator"
+  },
+  "impact": {
+    "tab": "Impact",
+    "title": "Community Impact",
+    "sub": "Everything sorted on EcoSort AI — by everyone, guests included.",
+    "items": "Items sorted",
+    "waste": "Waste diverted (est.)",
+    "co2": "CO₂ avoided (est.)",
+    "week": "Last 7 days",
+    "breakdown": "By category",
+    "yours": "Your share",
+    "yours_text": "You've sorted {n} of {total} items ({pct}%)",
+    "signin_hint": "Sign in to see your own share.",
+    "note": "Only genuine waste items are counted (non-waste objects are ignored). Estimates use average item weights and standard emission and paper-recycling factors; real figures vary.",
+    "empty": "No items sorted yet — be the first!",
+    "trees": "Trees saved via paper (est.)"
   }
 }

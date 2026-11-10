@@ -28,6 +28,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import db
 import waste_map
+import impact
 from chatbot_engine import get_response
 
 app = Flask(__name__)
@@ -533,10 +534,13 @@ def api_detect():
 
 
 def log_user_detections(detections, source, user_id):
-    if user_id:
-        for d in detections:
-            if d["category"] != "ignore":
-                db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source, user_id)
+    """Every real detection is logged. Signed-in users get theirs tied to
+    their account (points/history). Guests (user_id None) are stored as an
+    anonymous row — category, label and time only, nothing identifying — so
+    they still count toward the community Impact tracker."""
+    for d in detections:
+        if d["category"] != "ignore":
+            db.log_detection(d["label"], d["category"], d["confidence"], d["points"], source, user_id)
 
 
 @app.route("/api/detect_stream", methods=["POST"])
@@ -617,6 +621,13 @@ def api_history_export():
 @app.route("/api/history/monthly")
 def api_history_monthly():
     return jsonify(db.get_monthly(current_user_id()))
+
+
+@app.route("/api/impact")
+def api_impact():
+    resp = jsonify(impact.build(current_user_id()))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/api/stats")

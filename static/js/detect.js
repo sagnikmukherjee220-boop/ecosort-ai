@@ -335,6 +335,7 @@
     }
     handle(buf);
     if (!result) throw new Error("The AI service ended the response early. Please try again.");
+    document.dispatchEvent(new CustomEvent("ecosort:detected"));
     return result;
   }
 

@@ -249,3 +249,34 @@ def export_rows(user_id=None):
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+# recyclable items whose label looks like paper — used for the "trees saved" estimate
+PAPER_WORDS = ("paper", "cardboard", "carton", "newspaper", "magazine", "book", "notebook", "envelope", "box")
+
+
+def get_impact_counts(user_id=None, days=7):
+    """Site-wide tallies for the Impact tracker. Counts every logged
+    detection — signed-in users AND anonymous guest rows (user_id NULL,
+    which carry only category + time, nothing identifying)."""
+    conn = get_conn()
+    cats = conn.execute(
+        "SELECT category, COUNT(*) AS n FROM detections WHERE category <> 'ignore' GROUP BY category"
+    ).fetchall()
+    cutoff = (datetime.date.today() - datetime.timedelta(days=days - 1)).isoformat()
+    per_day = conn.execute(
+        "SELECT SUBSTR(ts, 1, 10) AS d, COUNT(*) AS n FROM detections "
+        "WHERE category <> 'ignore' AND ts >= ? GROUP BY SUBSTR(ts, 1, 10)", (cutoff,)
+    ).fetchall()
+    mine = None
+    if user_id is not None:
+        mine = conn.execute(
+            "SELECT COUNT(*) AS n FROM detections WHERE category <> 'ignore' AND user_id = ?", (user_id,)
+        ).fetchone()["n"]
+    like = " OR ".join(["LOWER(coco_label) LIKE ?"] * len(PAPER_WORDS))
+    paper = conn.execute(
+        f"SELECT COUNT(*) AS n FROM detections WHERE category = 'recyclable' AND ({like})",
+        tuple(f"%{w}%" for w in PAPER_WORDS),
+    ).fetchone()["n"]
+    conn.close()
+    return ({r["category"]: r["n"] for r in cats}, {r["d"]: r["n"] for r in per_day}, mine, paper)
