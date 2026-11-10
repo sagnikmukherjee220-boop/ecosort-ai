@@ -31,9 +31,11 @@
     }).join("") : '<p class="impact-empty">' + t("impact.empty", "No items sorted yet — be the first!") + "</p>";
     var you = document.getElementById("impYou");
     if (d.logged_in) {
-      var txt = t("impact.yours_text", "You've sorted {n} of {total} items ({pct}%)")
+      var line1 = t("impact.yours_text", "You've sorted {n} items — {pct}% of the community's {total}.")
         .replace("{n}", nf(d.mine)).replace("{total}", nf(d.items)).replace("{pct}", d.pct);
-      you.innerHTML = "<h4>" + t("impact.yours", "Your share") + "</h4><p>" + txt + "</p>";
+      var line2 = t("impact.yours_est", "≈ {kg} kg diverted from landfill · {co2} kg CO₂ avoided")
+        .replace("{kg}", nf(d.mine_kg)).replace("{co2}", nf(d.mine_co2));
+      you.innerHTML = "<h4>" + t("impact.yours", "Your impact") + "</h4><p>" + line1 + '</p><p class="est">' + line2 + "</p>";
     } else {
       you.innerHTML = '<p class="hint">' + t("impact.signin_hint", "Sign in to see your own share.") + "</p>";
     }

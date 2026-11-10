@@ -270,9 +270,9 @@ def get_impact_counts(user_id=None, days=7):
     ).fetchall()
     mine = None
     if user_id is not None:
-        mine = conn.execute(
-            "SELECT COUNT(*) AS n FROM detections WHERE category <> 'ignore' AND user_id = ?", (user_id,)
-        ).fetchone()["n"]
+        mine = {r["category"]: r["n"] for r in conn.execute(
+            "SELECT category, COUNT(*) AS n FROM detections WHERE category <> 'ignore' AND user_id = ? GROUP BY category",
+            (user_id,)).fetchall()}
     like = " OR ".join(["LOWER(coco_label) LIKE ?"] * len(PAPER_WORDS))
     paper = conn.execute(
         f"SELECT COUNT(*) AS n FROM detections WHERE category = 'recyclable' AND ({like})",

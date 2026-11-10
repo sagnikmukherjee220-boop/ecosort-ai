@@ -448,3 +448,4 @@ code.kbd{background:var(--surface);border:1px solid var(--border);padding:2px 8p
 .user-avatar{flex:0 0 40px;min-width:40px;}
 @media (max-width:560px){.profile-card{margin:24px 12px;padding:24px 18px;}}
 @media (max-width:560px){.impact-tab.open{display:none;}}
+.impact-you p.est{margin-top:6px;font-size:.82rem;color:var(--text-dim);}

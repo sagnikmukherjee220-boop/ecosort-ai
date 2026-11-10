@@ -371,11 +371,12 @@
     "co2": "CO₂ avoided (est.)",
     "week": "Last 7 days",
     "breakdown": "By category",
-    "yours": "Your share",
-    "yours_text": "You've sorted {n} of {total} items ({pct}%)",
+    "yours": "Your impact",
+    "yours_text": "You've sorted {n} items — {pct}% of the community's {total}.",
     "signin_hint": "Sign in to see your own share.",
     "note": "Only genuine waste items are counted (non-waste objects are ignored). Estimates use average item weights and standard emission and paper-recycling factors; real figures vary.",
     "empty": "No items sorted yet — be the first!",
-    "trees": "Trees saved via paper (est.)"
+    "trees": "Trees saved via paper (est.)",
+    "yours_est": "≈ {kg} kg diverted from landfill · {co2} kg CO₂ avoided"
   }
 }

@@ -31,6 +31,7 @@ def build(user_id=None):
     by_cat, per_day, mine, paper_items = db.get_impact_counts(user_id, days=7)
     total = sum(by_cat.values())
     kg = co2 = 0.0
+    my_kg = my_co2 = 0.0
     cats = []
     for key, meta in waste_map.CATEGORY_META.items():
         n = by_cat.get(key, 0)
@@ -38,6 +39,11 @@ def build(user_id=None):
         if diverted:
             kg += n * w
         co2 += n * w * f
+        if mine:
+            m = mine.get(key, 0)
+            if diverted:
+                my_kg += m * w
+            my_co2 += m * w * f
         cats.append({"key": key, "label": meta["label"], "color": meta["color"], "count": n})
     today = datetime.date.today()
     week = []
@@ -49,6 +55,9 @@ def build(user_id=None):
            "paper_kg": round(paper_kg, 1), "trees": round(paper_kg * TREES_PER_KG_PAPER, 2),
            "categories": cats, "week": week, "logged_in": user_id is not None}
     if user_id is not None:
-        out["mine"] = mine or 0
-        out["pct"] = round(100.0 * (mine or 0) / total, 1) if total else 0
+        my_items = sum((mine or {}).values())
+        out["mine"] = my_items
+        out["pct"] = round(100.0 * my_items / total, 1) if total else 0
+        out["mine_kg"] = round(my_kg, 2)
+        out["mine_co2"] = round(my_co2, 2)
     return out
