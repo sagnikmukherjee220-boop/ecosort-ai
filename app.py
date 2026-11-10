@@ -169,6 +169,30 @@ def backend_model(name, key_env, default, key=None):
     return default
 
 
+# Circuit breaker: when a Gemini model fails (overloaded, timing out), skip it
+# for a couple of minutes so the next scans go straight to the backup instead
+# of each one waiting for the same failure again. If EVERY backend is
+# currently skipped they are all tried anyway, so nothing is ever locked out.
+GEMINI_SKIP_SECONDS = 120
+_backend_skip = {}
+
+
+def _skipped(name):
+    return name.startswith("gemini") and time.time() < _backend_skip.get(name, 0.0)
+
+
+def _mark_failed(name):
+    if name.startswith("gemini"):
+        _backend_skip[name] = time.time() + GEMINI_SKIP_SECONDS
+
+
+def _usable_backends():
+    """Backends that have a key set, minus any currently being skipped."""
+    avail = [b for b in OPENAI_COMPAT_BACKENDS if os.environ.get(b[2])]
+    live = [b for b in avail if not _skipped(b[0])]
+    return live or avail
+
+
 def call_openai_compat(url, key, model, messages, reasoning=None):
     body = {"model": model, "messages": messages, "max_tokens": 800}
     for attempt in ((True, False) if reasoning else (False,)):
@@ -336,10 +360,8 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
     # when their key is set, and only after Hugging Face failed or is unset.
     if raw is None:
         # In order of quality: Gemini first, Groq only if Gemini fails.
-        for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
+        for name, url, key_env, model, reasoning in _usable_backends():
             key = os.environ.get(key_env)
-            if not key:
-                continue
             try:
                 raw = call_openai_compat(url, key, backend_model(name, key_env, model, key), messages, reasoning)
                 g.engine = ENGINE_LABELS.get(name, name)
@@ -347,6 +369,7 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             except Exception as e:  # noqa: BLE001
                 app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
                 errors.append(f"{name}: {type(e).__name__} {e}")
+                _mark_failed(name)
     if raw is None:
         if not errors:
             errors.append("hf_token missing")
@@ -439,12 +462,11 @@ def open_stream(messages):
     if hf_available():
         attempts += [("Llama-4 Scout (Hugging Face)", p, lambda p=p: _stream_hf(p, messages))
                      for p in VLM_PROVIDERS]
-    for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
+    for name, url, key_env, model, reasoning in _usable_backends():
         key = os.environ.get(key_env)
-        if key:
-            m = backend_model(name, key_env, model, key)
-            attempts.append((ENGINE_LABELS.get(name, name), name,
-                             lambda u=url, k=key, m=m, r=reasoning: _stream_openai_compat(u, k, m, messages, r)))
+        m = backend_model(name, key_env, model, key)
+        attempts.append((ENGINE_LABELS.get(name, name), name,
+                         lambda u=url, k=key, m=m, r=reasoning: _stream_openai_compat(u, k, m, messages, r)))
     hf_dead = False
     for engine, tag, make in attempts:
         if hf_dead and tag in VLM_PROVIDERS:
@@ -456,6 +478,7 @@ def open_stream(messages):
         except Exception as e:  # noqa: BLE001
             app.logger.warning("streamed detection via %s failed: %s: %s", tag, type(e).__name__, e)
             errors.append(f"{tag}: {type(e).__name__} {e}")
+            _mark_failed(tag)
             if tag in VLM_PROVIDERS and ("402" in str(e) or "credit" in str(e).lower()):
                 _hf_skip_until = time.time() + 600
                 hf_dead = True
