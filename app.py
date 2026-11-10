@@ -359,7 +359,10 @@ def _stream_hf(provider, messages):
 
 
 def _stream_openai_compat(url, key, model, messages, reasoning=None):
-    body = {"model": model, "messages": messages, "max_tokens": 1200, "stream": True}
+    # Groq's free tier caps this model at 1000 output tokens/minute and rejects
+    # any request that asks for more, so keep its ceiling below that.
+    cap = 900 if "groq.com" in url else 1200
+    body = {"model": model, "messages": messages, "max_tokens": cap, "stream": True}
     for attempt in ((True, False) if reasoning else (False,)):
         payload = dict(body, reasoning_effort=reasoning) if attempt else body
         resp = _post_retry(url, key, payload, stream=True)
