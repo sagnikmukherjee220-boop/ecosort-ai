@@ -122,61 +122,11 @@ OPENAI_COMPAT_BACKENDS = [
 
 
 def _post_retry(url, key, payload, stream=False):
-    """POST once; if the free tier says 'busy' (429/503), wait a moment and
-    try one more time so a single busy second doesn't fail the whole scan."""
-    def go():
-        return requests.post(url, headers={"Authorization": f"Bearer {key}"},
-                             json=payload, timeout=(8, 20 if "googleapis" in url else 40), stream=stream)
-    resp = go()
-    if resp.status_code in (429, 503):
-        try:
-            wait = min(float(resp.headers.get("Retry-After", 2)), 5.0)
-        except ValueError:
-            wait = 2.0
-        resp.close()
-        time.sleep(max(wait, 1.0))
-        resp = go()
-    return resp
-
-
-MODEL_ENV = {"gemini-fallback": "GEMINI_FALLBACK_MODEL"}
-ENGINE_LABELS = {"gemini": "Google Gemini", "gemini-fallback": "Google Gemini (backup model)", "groq": "Groq"}
-
-
-_gem_models = {"at": 0.0, "ids": []}
-_GEM_SKIP = ("image", "tts", "live", "audio", "embed", "thinking", "exp", "robotics",
-             "computer", "learnlm", "gemma", "vision", "aqa", "imagen", "veo")
-
-
-def discover_gemini_model(key, exclude):
-    """Ask Google which models this key can use and pick a 'flash' one other
-    than the main model — so the backup keeps working even if a hard-coded
-    model name gets retired (that's what a 404 means). Cached for 6 hours."""
-    now = time.time()
-    if now - _gem_models["at"] > 6 * 3600 or not _gem_models["ids"]:
-        try:
-            r = requests.get("https://generativelanguage.googleapis.com/v1beta/openai/models",
-                             headers={"Authorization": f"Bearer {key}"}, timeout=10)
-            ids = [m.get("id", "").replace("models/", "") for m in r.json().get("data", [])]
-            _gem_models.update(at=now, ids=ids)
-        except Exception as e:  # noqa: BLE001
-            app.logger.warning("listing gemini models failed: %s", e)
-            _gem_models["at"] = now - 5 * 3600  # retry in an hour
-    cands = [i for i in _gem_models["ids"]
-             if "flash" in i and i != exclude and not any(w in i for w in _GEM_SKIP)]
-    # prefer the newest-looking, non-lite model; lite ones only if nothing else
-    cands.sort(key=lambda i: ("lite" in i, [-int(x) if x.isdigit() else 0 for x in i.replace("-", ".").split(".")]))
-    return cands[0] if cands else None
-
-
-def backend_model(name, key_env, default, key=None):
-    env = os.environ.get(MODEL_ENV.get(name) or key_env.replace("_API_KEY", "_MODEL"))
-    if env:
-        return env
-    if name == "gemini-fallback" and key:
-        main = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-        return discover_gemini_model(key, main) or default
-    return default
+    """Single POST. (No retry on 429/503: when a free tier is overloaded a
+    quick retry rarely helps and just makes the user wait longer before the
+    next backend gets its turn.)"""
+    return requests.post(url, headers={"Authorization": f"Bearer {key}"},
+                         json=payload, timeout=(8, 20 if "googleapis" in url else 40), stream=stream)
 
 
 def call_openai_compat(url, key, model, messages, reasoning=None):
@@ -194,6 +144,14 @@ def call_openai_compat(url, key, model, messages, reasoning=None):
 # When Hugging Face reports no credits, skip it for a while instead of making
 # every photo wait on three failing provider calls first.
 _hf_skip_until = 0.0
+
+
+def hf_available():
+    """Hugging Face's free credits are used up, so it is OFF by default (each
+    attempt just costs a failed round-trip). Set USE_HF=1 in the environment
+    — together with HF_TOKEN — to turn it back on once credits are topped up."""
+    return (os.environ.get("USE_HF") == "1" and bool(os.environ.get("HF_TOKEN"))
+            and time.time() >= _hf_skip_until)
 
 
 def friendly_ai_error(errors):
@@ -320,7 +278,7 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
 
     raw, errors = None, []
     global _hf_skip_until
-    if os.environ.get("HF_TOKEN") and time.time() >= _hf_skip_until:
+    if hf_available():
         for provider in VLM_PROVIDERS:
             try:
                 response = get_hf_client(provider).chat.completions.create(
@@ -438,7 +396,7 @@ def open_stream(messages):
     global _hf_skip_until
     errors = []
     attempts = []
-    if os.environ.get("HF_TOKEN") and time.time() >= _hf_skip_until:
+    if hf_available():
         attempts += [("Llama-4 Scout (Hugging Face)", p, lambda p=p: _stream_hf(p, messages))
                      for p in VLM_PROVIDERS]
     for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
