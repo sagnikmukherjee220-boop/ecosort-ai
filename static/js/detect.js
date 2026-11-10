@@ -214,32 +214,55 @@
   // when sensitivity changes, and the upload-mode Analyze button. Shows its
   // loading state on whichever button is actually visible at the time
   // (capture vs. retake vs. analyze), not necessarily the one clicked.
+  // When the AI service says it is busy (free-tier rate limits), wait 30 s and
+  // try the same scan again by itself, up to twice, with a visible countdown.
+  const AUTO_RETRY_SECONDS = 30;
+  const AUTO_RETRY_MAX = 2;
+  const isBusyError = (e) => /busy/i.test((e && e.message) || "");
+
+  async function waitWithCountdown(seconds, loadingBtn) {
+    const msg = (n) => tr("detect.retrying", "AI is busy — retrying automatically in {s}s…").replace("{s}", n);
+    for (let n = seconds; n > 0; n--) {
+      loadingBtn.textContent = msg(n);
+      detList.innerHTML = '<div class="det-engine">' + msg(n) + "</div>";
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+
   async function runAnalysis(dataUrl, source, loadingBtn, idleText) {
     if (!dataUrl || busy) return;
     busy = true;
     const wasDisabled = loadingBtn.disabled;
     loadingBtn.disabled = true;
-    loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
     const prevList = detList.innerHTML;
     const prevCount = detCount.textContent;
-    const progress = startProgress();
-    try {
-      const data = await sendForDetection(dataUrl, source, (t) => progress.addNote(t));
-      await progress.finish();
-      renderDetections(data.detections, overlay.width, overlay.height);
-      const note = document.createElement("div");
-      note.className = "det-engine";
-      const secs = (progress.elapsed()).toFixed(1);
-      note.textContent = (data.engine
-        ? tr("detect.analysed_by", "Analysed by {engine} in {secs}s")
-        : tr("detect.analysed_in", "Analysed in {secs}s")
-      ).replace("{engine}", data.engine || "").replace("{secs}", secs);
-      detList.appendChild(note);
-    } catch (e) {
-      progress.stop();
-      detList.innerHTML = prevList;
-      detCount.textContent = prevCount;
-      alert(e.message);
+    for (let attempt = 0; ; attempt++) {
+      loadingBtn.textContent = window.I18N ? window.I18N.t("detect.analyzing", "Analyzing...") : "Analyzing...";
+      const progress = startProgress();
+      try {
+        const data = await sendForDetection(dataUrl, source, (t) => progress.addNote(t));
+        await progress.finish();
+        renderDetections(data.detections, overlay.width, overlay.height);
+        const note = document.createElement("div");
+        note.className = "det-engine";
+        const secs = (progress.elapsed()).toFixed(1);
+        note.textContent = (data.engine
+          ? tr("detect.analysed_by", "Analysed by {engine} in {secs}s")
+          : tr("detect.analysed_in", "Analysed in {secs}s")
+        ).replace("{engine}", data.engine || "").replace("{secs}", secs);
+        detList.appendChild(note);
+        break;
+      } catch (e) {
+        progress.stop();
+        if (isBusyError(e) && attempt < AUTO_RETRY_MAX) {
+          await waitWithCountdown(AUTO_RETRY_SECONDS, loadingBtn);
+          continue;
+        }
+        detList.innerHTML = prevList;
+        detCount.textContent = prevCount;
+        alert(e.message);
+        break;
+      }
     }
     busy = false;
     loadingBtn.disabled = wasDisabled;

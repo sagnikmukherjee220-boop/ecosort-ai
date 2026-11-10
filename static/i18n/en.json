@@ -43,7 +43,8 @@
     "progress_title": "AI is analysing your photo",
     "progress_wait": "Reading the image…",
     "analysed_by": "Analysed by {engine} in {secs}s",
-    "analysed_in": "Analysed in {secs}s"
+    "analysed_in": "Analysed in {secs}s",
+    "retrying": "AI is busy — retrying automatically in {s}s…"
   },
   "intro": {
     "skip": "Skip",

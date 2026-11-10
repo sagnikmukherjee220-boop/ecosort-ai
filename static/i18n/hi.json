@@ -43,7 +43,8 @@
     "progress_title": "AI आपकी फ़ोटो का विश्लेषण कर रहा है",
     "progress_wait": "छवि पढ़ी जा रही है…",
     "analysed_by": "{engine} द्वारा {secs} सेकंड में विश्लेषण",
-    "analysed_in": "{secs} सेकंड में विश्लेषण"
+    "analysed_in": "{secs} सेकंड में विश्लेषण",
+    "retrying": "AI व्यस्त है — {s} सेकंड में अपने-आप दोबारा कोशिश होगी…"
   },
   "intro": {
     "skip": "छोड़ें",
