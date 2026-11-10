@@ -116,12 +116,29 @@ OPENAI_COMPAT_BACKENDS = [
 # setting (HTTP 400) the call is retried without it.
 
 
+def _post_retry(url, key, payload, stream=False):
+    """POST once; if the free tier says 'busy' (429/503), wait a moment and
+    try one more time so a single busy second doesn't fail the whole scan."""
+    def go():
+        return requests.post(url, headers={"Authorization": f"Bearer {key}"},
+                             json=payload, timeout=40, stream=stream)
+    resp = go()
+    if resp.status_code in (429, 503):
+        try:
+            wait = min(float(resp.headers.get("Retry-After", 2)), 5.0)
+        except ValueError:
+            wait = 2.0
+        resp.close()
+        time.sleep(max(wait, 1.0))
+        resp = go()
+    return resp
+
+
 def call_openai_compat(url, key, model, messages, reasoning=None):
     body = {"model": model, "messages": messages, "max_tokens": 800}
     for attempt in ((True, False) if reasoning else (False,)):
         payload = dict(body, reasoning_effort=reasoning) if attempt else body
-        resp = requests.post(
-            url, headers={"Authorization": f"Bearer {key}"}, json=payload, timeout=40)
+        resp = _post_retry(url, key, payload)
         if resp.status_code == 400 and attempt:
             continue
         if resp.status_code != 200:
@@ -135,10 +152,21 @@ _hf_skip_until = 0.0
 
 
 def friendly_ai_error(errors):
-    """One plain-English line for the user, from the per-provider errors."""
+    """One plain-English line for the user, from the per-provider errors.
+    The backups (Gemini/Groq) are judged first: if one of them was merely
+    rate-limited, the user should hear 'busy', not 'out of credits' just
+    because Hugging Face's free credits ran out earlier in the chain."""
+    backup = [e for e in errors if e.split(":", 1)[0] in ("gemini", "groq")]
     text = " ".join(errors).lower()
     if "hf_token" in text:
         return "The AI service isn't configured on the server (missing access token)."
+    btext = " ".join(backup).lower()
+    if backup:
+        if "429" in btext or "rate" in btext or "quota" in btext or "exhausted" in btext or "503" in btext:
+            return "The AI service is busy right now. Please try again in a minute."
+        if "401" in btext or "403" in btext:
+            return "The AI service rejected the server's access key."
+        return "The AI service is not responding right now. Please try again in a moment."
     if "402" in text or "credit" in text or "payment" in text:
         return "The AI service has used up its free credits. Please try again later."
     if "429" in text or "rate" in text:
@@ -334,8 +362,7 @@ def _stream_openai_compat(url, key, model, messages, reasoning=None):
     body = {"model": model, "messages": messages, "max_tokens": 1200, "stream": True}
     for attempt in ((True, False) if reasoning else (False,)):
         payload = dict(body, reasoning_effort=reasoning) if attempt else body
-        resp = requests.post(url, headers={"Authorization": f"Bearer {key}"},
-                             json=payload, timeout=40, stream=True)
+        resp = _post_retry(url, key, payload, stream=True)
         if resp.status_code == 400 and attempt:
             resp.close()
             continue
