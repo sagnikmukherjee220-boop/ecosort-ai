@@ -108,6 +108,11 @@ def get_hf_client(provider):
 OPENAI_COMPAT_BACKENDS = [
     ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
      "GEMINI_API_KEY", "gemini-3.8-flash", "low"),
+    # Second Gemini model on the same key: when the main one is overloaded (503)
+    # or slow, a different model is often still available. Override with
+    # GEMINI_FALLBACK_MODEL if this default name is ever retired.
+    ("gemini-fallback", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+     "GEMINI_API_KEY", "gemini-2.5-flash", "low"),
     ("groq", "https://api.groq.com/openai/v1/chat/completions",
      "GROQ_API_KEY", "qwen/qwen3.8-27b", "none"),
 ]
@@ -134,6 +139,14 @@ def _post_retry(url, key, payload, stream=False):
     return resp
 
 
+MODEL_ENV = {"gemini-fallback": "GEMINI_FALLBACK_MODEL"}
+ENGINE_LABELS = {"gemini": "Google Gemini", "gemini-fallback": "Google Gemini (backup model)", "groq": "Groq"}
+
+
+def backend_model(name, key_env, default):
+    return os.environ.get(MODEL_ENV.get(name) or key_env.replace("_API_KEY", "_MODEL"), default)
+
+
 def call_openai_compat(url, key, model, messages, reasoning=None):
     body = {"model": model, "messages": messages, "max_tokens": 800}
     for attempt in ((True, False) if reasoning else (False,)):
@@ -156,7 +169,7 @@ def friendly_ai_error(errors):
     The backups (Gemini/Groq) are judged first: if one of them was merely
     rate-limited, the user should hear 'busy', not 'out of credits' just
     because Hugging Face's free credits ran out earlier in the chain."""
-    backup = [e for e in errors if e.split(":", 1)[0] in ("gemini", "groq")]
+    backup = [e for e in errors if e.split(":", 1)[0] in ("gemini", "gemini-fallback", "groq")]
     text = " ".join(errors).lower()
     if "hf_token" in text:
         return "The AI service isn't configured on the server (missing access token)."
@@ -298,9 +311,8 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             if not key:
                 continue
             try:
-                raw = call_openai_compat(url, key, os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model),
-                                         messages, reasoning)
-                g.engine = {"gemini": "Google Gemini", "groq": "Groq"}.get(name, name)
+                raw = call_openai_compat(url, key, backend_model(name, key_env, model), messages, reasoning)
+                g.engine = ENGINE_LABELS.get(name, name)
                 break
             except Exception as e:  # noqa: BLE001
                 app.logger.warning("detection via %s failed: %s: %s", name, type(e).__name__, e)
@@ -400,8 +412,8 @@ def open_stream(messages):
     for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
         key = os.environ.get(key_env)
         if key:
-            m = os.environ.get(key_env.replace("_API_KEY", "_MODEL"), model)
-            attempts.append(({"gemini": "Google Gemini", "groq": "Groq"}.get(name, name), name,
+            m = backend_model(name, key_env, model)
+            attempts.append((ENGINE_LABELS.get(name, name), name,
                              lambda u=url, k=key, m=m, r=reasoning: _stream_openai_compat(u, k, m, messages, r)))
     hf_dead = False
     for engine, tag, make in attempts:
