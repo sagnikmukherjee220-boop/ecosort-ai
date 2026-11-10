@@ -126,7 +126,7 @@ def _post_retry(url, key, payload, stream=False):
     try one more time so a single busy second doesn't fail the whole scan."""
     def go():
         return requests.post(url, headers={"Authorization": f"Bearer {key}"},
-                             json=payload, timeout=40, stream=stream)
+                             json=payload, timeout=(8, 20 if "googleapis" in url else 40), stream=stream)
     resp = go()
     if resp.status_code in (429, 503):
         try:
@@ -143,8 +143,40 @@ MODEL_ENV = {"gemini-fallback": "GEMINI_FALLBACK_MODEL"}
 ENGINE_LABELS = {"gemini": "Google Gemini", "gemini-fallback": "Google Gemini (backup model)", "groq": "Groq"}
 
 
-def backend_model(name, key_env, default):
-    return os.environ.get(MODEL_ENV.get(name) or key_env.replace("_API_KEY", "_MODEL"), default)
+_gem_models = {"at": 0.0, "ids": []}
+_GEM_SKIP = ("image", "tts", "live", "audio", "embed", "thinking", "exp", "robotics",
+             "computer", "learnlm", "gemma", "vision", "aqa", "imagen", "veo")
+
+
+def discover_gemini_model(key, exclude):
+    """Ask Google which models this key can use and pick a 'flash' one other
+    than the main model — so the backup keeps working even if a hard-coded
+    model name gets retired (that's what a 404 means). Cached for 6 hours."""
+    now = time.time()
+    if now - _gem_models["at"] > 6 * 3600 or not _gem_models["ids"]:
+        try:
+            r = requests.get("https://generativelanguage.googleapis.com/v1beta/openai/models",
+                             headers={"Authorization": f"Bearer {key}"}, timeout=10)
+            ids = [m.get("id", "").replace("models/", "") for m in r.json().get("data", [])]
+            _gem_models.update(at=now, ids=ids)
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning("listing gemini models failed: %s", e)
+            _gem_models["at"] = now - 5 * 3600  # retry in an hour
+    cands = [i for i in _gem_models["ids"]
+             if "flash" in i and i != exclude and not any(w in i for w in _GEM_SKIP)]
+    # prefer the newest-looking, non-lite model; lite ones only if nothing else
+    cands.sort(key=lambda i: ("lite" in i, [-int(x) if x.isdigit() else 0 for x in i.replace("-", ".").split(".")]))
+    return cands[0] if cands else None
+
+
+def backend_model(name, key_env, default, key=None):
+    env = os.environ.get(MODEL_ENV.get(name) or key_env.replace("_API_KEY", "_MODEL"))
+    if env:
+        return env
+    if name == "gemini-fallback" and key:
+        main = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+        return discover_gemini_model(key, main) or default
+    return default
 
 
 def call_openai_compat(url, key, model, messages, reasoning=None):
@@ -311,7 +343,7 @@ def run_detection(image: Image.Image, image_data_uri: str, conf_threshold=CONF_T
             if not key:
                 continue
             try:
-                raw = call_openai_compat(url, key, backend_model(name, key_env, model), messages, reasoning)
+                raw = call_openai_compat(url, key, backend_model(name, key_env, model, key), messages, reasoning)
                 g.engine = ENGINE_LABELS.get(name, name)
                 break
             except Exception as e:  # noqa: BLE001
@@ -412,7 +444,7 @@ def open_stream(messages):
     for name, url, key_env, model, reasoning in OPENAI_COMPAT_BACKENDS:
         key = os.environ.get(key_env)
         if key:
-            m = backend_model(name, key_env, model)
+            m = backend_model(name, key_env, model, key)
             attempts.append((ENGINE_LABELS.get(name, name), name,
                              lambda u=url, k=key, m=m, r=reasoning: _stream_openai_compat(u, k, m, messages, r)))
     hf_dead = False
